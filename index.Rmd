@@ -1,8 +1,13 @@
 ---
 title: "Introduction"
+author: "Obiwan Kenobi"
+date: "*A long time ago...*"
 
 
 ---
+
+***
+
 This github project page is a part of a course on open data science that I've enrolled in. One of the main subjects on the course is learning R and its application to data management and analysis.
 
 Click [here](https://github.com/MB-Finski/IODS-project) to get to my Github IODS-repository.

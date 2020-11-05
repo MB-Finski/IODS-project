@@ -1,5 +1,6 @@
 ---
 title: "Linear regression"
+date: "*`r Sys.Date()`*"
 output:
   html_document:
     toc: false
@@ -354,7 +355,7 @@ plot(finalModel,which = c(1,2,5))
 
 ***
 
-Evaluation of assumptions:
+### Evaluation of assumptions
 
 1. Linearity of functional form:
     + Satisfied. Inspecting the residuals *versus* fitted graph below, there is no pattern in the mean observations across the x-axis.
