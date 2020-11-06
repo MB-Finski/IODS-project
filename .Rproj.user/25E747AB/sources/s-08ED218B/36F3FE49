@@ -1,0 +1,25 @@
+{
+    "id": "36F3FE49",
+    "path": "~/MEGA/Koulu/OpenDataScience/IODS-project/data/create_learning2014.r",
+    "project_path": "data/create_learning2014.r",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1604320594386.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "tempName": "Untitled1",
+        "cursorPosition": "15,19",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1604325692,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1604325692228,
+    "read_only": false,
+    "read_only_alternatives": []
+}

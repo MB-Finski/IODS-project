@@ -1,0 +1,412 @@
+---
+title: "Linear regression"
+date: "*`r Sys.Date()`*"
+output:
+  html_document:
+    toc: false
+
+---
+
+
+
+In the following exercise we inspect an example data set for linear correlations using R. First we inspect the data set and then we select three most promising variables for analysis with multiple linear regression. 
+
+You can focus on specific parts of the data analysis by topic below.
+
+
+# {.tabset .tabset-fade .tabset-pills}
+
+
+## 1: Data description 
+
+
+### Description of data
+
+The data set used this exercise has been previously parsed from [this](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt) file using an R script available [here](https://github.com/MB-Finski/IODS-project/data).
+
+The data consists of students who underwent a statistics course in 2014 to 2015. Their global attitude toward statistics and learning approaches were recorded with the aid of surveys. Finally the exam  points for the course were also recorded for each student. A more exhaustive metadata is available [here](https://www.mv.helsinki.fi/home/kvehkala/JYTmooc/JYTOPKYS3-meta.txt).
+
+
+
+
+For an explanation of the individual variables, please, refer to the following:
+
+
+
+
+Variable name  | Explanation
+---           | -------------
+*gender*  | Gender of the student encoded as "M" or "F"
+*points*  | Points from the course exam
+*attitude*  | Global attitude towards statistics on a scale of 1-5 (higher = better)
+*age*  | Age of the student
+*deep*  | Deep learning approach on a scale of 1-5 (higher = more deep learning approach)
+*stra*  | Strategic learning approach on a scale of 1-5 (higher = more strategic learning approach)
+*surf*  | Superficial learning approach on a scale of 1-5 (higher = more superficial learning approach)
+
+
+
+***
+
+### Exploring the data table structure
+
+Let's explore the data set using the str() function:
+
+```{r}
+
+
+#Read the table from the source file
+analysisDataset = read.table("https://raw.githubusercontent.com/MB-Finski/IODS-project/master/data/learning2014.txt")
+
+#Print out the basic structure and dimensions of the dataset
+#Please note, that dim() is redundant here as str() already prints out the table dimensions
+str(analysisDataset)
+
+
+
+
+```
+
+
+
+As you can see the data consists of 166 observations with 7 variables.
+
+
+***
+
+
+### Interactive data table
+
+
+Below you can explore the whole data set interactively. The code is left visible for the purposes of this course, only.
+
+
+```{r}
+
+
+#Draw an interactive data table
+library(DT)
+datatable(analysisDataset,options = list(columnDefs = list(list(
+  targets = 1:7,
+  render = JS(
+    "function(data, type, row, meta) {",
+    "return type === 'display' && data.toString().length > 5 ?",
+    "'<span title=\"' + data.toString() + '\">' + data.toString().substr(0, 5) + '...</span>' : data.toString();",
+    "}")
+  ))),callback = JS('table.page(0).draw(false);'))
+
+```
+
+
+
+
+
+
+## 2: Overview of data
+
+
+Now we wish to perform exploratory (visual) analysis on the data to determine which factors might predict success in the exam among students.
+
+Below you can see a summary table of the data:
+
+***
+
+```{r out.width="100%",  warning=FALSE, message=FALSE}
+
+library(gtsummary)
+
+
+#Print a summary table of the data with gender as the contrast. Also add a "overall" column
+tbl_summary(analysisDataset,by = gender) %>% add_overall() 
+
+
+
+```
+
+***
+### Data table interpretation
+
+From the summary table we can see that there are potential differences in attitude between the sexes as well as the mean age.
+However, the median points for each gender are nearly identical. As far as learning strategies are considered, females
+may have a slight emphasis on strategic learning. There are considerably less males enrolled in the study.
+
+
+
+***
+
+### Visual inspection of data
+
+For the visual inspection of data, instead of printing out a rather complex scatter plot matrix including all variables at once, I chose to have separate graphs for each variable. 
+
+Below you can see a convenience function that I wrote for creating the individual graphs.
+
+
+```{r out.width="100%",  warning=FALSE, message=FALSE}
+
+library(ggplot2)
+library(ggExtra)
+library(ggpubr)
+
+
+#A convenience function for creating informative scatter plots.
+createScatterPlot <- function(predictor,displayName){
+
+  
+ 
+  #Use custom color scheme for the graphs.
+  plotColors <- c("F" = "red", "M" = "blue", "Combined" = "black")
+  
+  #Create the plot with gender as contrast and place the legend at the bottom to save horizontal space.
+  scatterPlot <- ggplot(analysisDataset, aes(x = predictor, y = points,col = gender, shape=gender,colour=plotColors))+theme(legend.position="bottom")
+  
+  #Add scatterplot points and prevent point stacking with jitter. Also suppress the separate legend for the gender specific point shapes.
+  scatterPlot <- scatterPlot + geom_point(position = position_jitter(width = 0.5, height = 0.5))+guides(shape=FALSE)
+  
+  #Draw the regression lines for both groups (male and female) and print the respective Pearson correlation coefficients
+  scatterPlot <- scatterPlot + geom_smooth(method="lm", se=FALSE)+stat_cor(method = "pearson", p.accuracy = 0.001, r.accuracy = 0.01, position = position_nudge(x=0,y=4.4))
+  
+  #Change the aesthetics mappings a little bit to print a regression line for data in both groups
+  scatterPlot <- scatterPlot + geom_smooth(mapping=aes(predictor,points,colour = "Combined"),method = "lm", se=FALSE, data = analysisDataset,inherit.aes =FALSE)
+  #Print the Pearson correlation coefficient for both groups. Also adjust the text position so that it doesn't overlap with the previously printed text.
+  scatterPlot <- scatterPlot + stat_cor(mapping=aes(predictor,points,colour = "Combined"),method = "pearson", p.accuracy = 0.001, r.accuracy = 0.01,inherit.aes = FALSE,position = position_nudge(x=0,y=2))
+  
+  #Print the x- and y-axis labels and suppress the superfluous legend label
+  scatterPlot <- scatterPlot + labs(x = displayName,y = "Exam points",colour = "")
+  
+  #Apply our custom color scheme and readable data labels
+  scatterPlot <- scatterPlot + scale_color_manual(values =plotColors, labels=c("Combined","Female", "Male"))
+  
+  #Apply a title for the graph
+  scatterPlot <- scatterPlot + ggtitle(paste(displayName, "versus exam points", sep = " "))
+  
+  #Add marginal boxplots for visualizing outliers, distribution, and group differences
+  scatterPlot <- ggMarginal(p=scatterPlot,type="boxplot",size = 6,groupColour = TRUE, groupFill = TRUE)
+  
+  #Print the plot.
+  scatterPlot
+  
+  
+}
+
+
+
+```
+
+
+
+
+***
+
+Here you can inspect each graph under its corresponding tab.
+
+***
+
+### {.tabset .tabset-fade}
+
+
+#### **Attitude**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
+
+#Draw the plot using the previously created convenience function
+createScatterPlot(analysisDataset$attitude, displayName="Attitude")
+
+
+```
+
+***
+
+##### Interpretation
+
+Based on this graph, there seems to be a considerable positive correlation between attitude and exam points.
+Seemingly there may also be minor differences in the distribution of attitude between genders. This should be
+taken into account if/when any difference is observed between the genders in exam points. Fairly normal distribution for both variables across genders.
+
+#### **Age**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
+
+createScatterPlot(analysisDataset$age,displayName="Age")
+
+```
+
+***
+
+##### Interpretation
+
+No significant correlations here. The two outliers in the male group cause a trending result which is sure to vanish
+by excluding these outliers. The distribution is reminiscent of a chi-squared distribution with zero near 18, which is understandable.
+
+Most parametric methods that assume symmetric normal distributions are actually remarkably robust against this type of distributions so I would be
+more concerned with the outliers than the assymetry of the distribution.
+
+
+#### **Gender**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=6}
+
+#For a class variable like the gender we want something a little bit different
+#Create a box plot with gender vs exam points
+boxPlot <- ggplot(analysisDataset, aes(x = gender, y = points, color=gender, fill=gender))+theme(legend.position="none")
+boxPlot <- boxPlot + geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2, notch=FALSE)
+
+#Adjust outline color
+boxPlot <- boxPlot + scale_color_manual(values=c("black","black"))
+
+#Adjust fill color
+boxPlot <- boxPlot + scale_fill_manual(values=c("red","blue"))
+
+#Set proper lables for both axes
+boxPlot <- boxPlot + labs(x = "Gender",y = "Exam points", fill = "")
+
+#Set the graph title
+boxPlot <- boxPlot + ggtitle("Gender versus exam points")
+
+#Print the plot
+boxPlot
+
+```
+
+***
+
+##### Interpretation
+
+Based on a visual inspection, there's likely no major differences in exam points based on gender. Fairly symmetrical distributions.
+
+#### **Deep learning**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
+
+createScatterPlot(analysisDataset$deep,displayName="Deep learning")
+
+```
+
+***
+
+##### Interpretation
+
+No significant correlation here. Normal distributions.
+
+
+#### **Superficial learning**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
+
+createScatterPlot(analysisDataset$surf,displayName="Superficial learning")
+
+```
+
+***
+
+##### Interpretation
+
+Overall trending negative correlation. Fairly normal distributions.
+
+
+#### **Strategic learning**
+
+```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
+
+createScatterPlot(analysisDataset$stra,displayName="Strategic learning")
+
+```
+
+***
+
+##### Interpretation
+
+Overall trending positive correlation. Fairly normal distributions.
+
+
+## 3: Building the regression model
+
+Based on the exploratory analysis, attitude is obviously the most promising predictor for exam points. The next most promising predictors seem to be
+strategic and surface learning approaches. Well choose these three for our multiple regression model.
+
+````{r out.width="100%"}
+
+#Create the regression model
+multipleRegression <- lm(points ~ attitude + stra + surf, data = analysisDataset)
+
+#Print a summary of the model
+summary(multipleRegression)
+
+````
+
+***
+
+### Stepwise selection
+
+Next we wish to optimize our model by backward stepwise selection. Drop out any predictors with a p>0.05.
+
+***
+
+````{r out.width="100%"}
+
+#Drop out independent variables in a stepwise manner as long as their individual p>0.05
+#The k for critical p=0.05 is taken from the chi-squared distribution: qchisq(p=0.05,df=1,lower.tail=FALSE).
+
+finalModel=step(object= multipleRegression, direction="backward", k = qchisq(p=0.05,df=1,lower.tail=FALSE))
+
+
+summary(finalModel)
+
+
+````
+
+***
+
+### Final model
+
+The resulting model is points ~ attitude. I.e., neither stra or surf predicted the exam points at a statistically significant (p<0.05) level and were dropped out.
+
+
+
+## 4: Model interpretation
+
+Re-print the model summary:
+
+````{r out.width="100%"}
+
+summary(finalModel)
+
+
+````
+
+From this model we can see that the predicted score in the exam goes up 3.53 points (95% CI: 2.41 - 4.64, p < 0.001) for every increase of one unit in the student's attitude. 
+
+The resulting regression model written out with scalar values is: points = 3.53 * attitude + 11.64
+
+The multiple R squared is actually equal to "singular" R squared in this case as the final model is no longer a multiple regression due to dropping out the insignificant predictors.
+The R squared signifies the proportion of variance in exam points that our model is able to explain. In this case 19%.
+
+## 5: Model validation
+
+Print out the requested diagnostic plots:
+
+````{r out.width="100%"}
+
+plot(finalModel,which = c(1,2,5))
+
+
+````
+
+***
+
+### Evaluation of assumptions
+
+1. Linearity of functional form:
+    + Satisfied. Inspecting the residuals *versus* fitted graph below, there is no pattern in the mean observations across the x-axis.
+2. Mean of residual approximately zero:
+    + Satisfied. Inspecting the residuals *versus* fitted graph below, the residuals seem evenly distributed around y=0.
+3. Homoscedasticity of residuals:
+    + Satisfied. Inspecting the residuals *versus* fitted graph below, a "shotgun pattern" can be observed (i.e. there is no obvious pattern in the graph indicating difference in variance over x-axis).
+4. Normal distribution of residuals:
+    + Satisfied. This is evident inspecting the Q-Q-plot of the standardized residuals.
+5. No overtly influential observations/outliers:
+    + Satisfied. Cooks's distances for all observations are very small. Even though there are a few observations with standardized residuals near -3 they are of no serious consequence for the model estimate for attitude as evidenced by theis Cook's distances. However, if the intercept is of interest, these observations could potentially have an affect on the estimate for the intercept.
+    
+
+
+
+

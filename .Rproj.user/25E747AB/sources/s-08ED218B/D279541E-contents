@@ -1,0 +1,19 @@
+name: "My IODS 2020 project page"
+navbar:
+  title: "My IODS project page"
+  type: inverse
+  right:
+    - text: "Introduction"
+      icon: fa-home
+      href: index.html
+    - text: "Linear regression"
+      icon: fa-info
+      href: chapter2.html
+output:
+  html_document:
+    theme: lumen
+    fig_caption: true
+    highlight: textmate
+
+    
+    
