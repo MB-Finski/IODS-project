@@ -277,7 +277,7 @@ Based on a visual inspection, there's likely no major differences in exam points
 
 ```{r out.width="100%", warning=FALSE, message=FALSE,fig.height=8}
 
-createScatterPlot(analysisDataset$deep,displayName="Deep learning")
+createScatterPlot(analysisDataset$deep, displayName = "Deep learning")
 
 ```
 
