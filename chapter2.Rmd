@@ -102,12 +102,41 @@ datatable(analysisDataset,options = list(columnDefs = list(list(
 
 
 
-## 2: Graphical overview
+## 2: Overview of data
 
 
 Now we wish to perform exploratory (visual) analysis on the data to determine which factors might predict success in the exam among students.
 
-Instead of printing out a rather complex scatter plot matrix including all variables at once, I chose to have separate graphs for each variable. 
+Below you can see a summary table of the data:
+
+***
+
+```{r out.width="100%",  warning=FALSE, message=FALSE}
+
+library(gtsummary)
+
+
+#Print a summary table of the data with gender as the contrast. Also add a "overall" column
+tbl_summary(analysisDataset,by = gender) %>% add_overall() 
+
+
+
+```
+
+***
+### Data table interpretation
+
+From the summary table we can see that there are potential differences in attitude between the sexes as well as the mean age.
+However, the median points for each gender are nearly identical. As far as learning strategies are considered, females
+may have a slight emphasis on strategic learning. There are considerably less males enrolled in the study.
+
+
+
+***
+
+### Visual inspection of data
+
+For the visual inspection of data, instead of printing out a rather complex scatter plot matrix including all variables at once, I chose to have separate graphs for each variable. 
 
 Below you can see a convenience function that I wrote for creating the individual graphs.
 
@@ -158,7 +187,13 @@ createScatterPlot <- function(predictor,displayName){
   
   
 }
+
+
+
 ```
+
+
+
 
 ***
 
@@ -185,7 +220,7 @@ createScatterPlot(analysisDataset$attitude, displayName="Attitude")
 
 Based on this graph, there seems to be a considerable positive correlation between attitude and exam points.
 Seemingly there may also be minor differences in the distribution of attitude between genders. This should be
-taken into account if/when any difference is observed between the genders in exam points.
+taken into account if/when any difference is observed between the genders in exam points. Fairly normal distribution for both variables across genders.
 
 #### **Age**
 
@@ -200,7 +235,10 @@ createScatterPlot(analysisDataset$age,displayName="Age")
 ##### Interpretation
 
 No significant correlations here. The two outliers in the male group cause a trending result which is sure to vanish
-by excluding these outliers.
+by excluding these outliers. The distribution is reminiscent of a chi-squared distribution with zero near 18, which is understandable.
+
+Most parametric methods that assume symmetric normal distributions are actually remarkably robust against this type of distributions so I would be
+more concerned with the outliers than the assymetry of the distribution.
 
 
 #### **Gender**
@@ -233,7 +271,7 @@ boxPlot
 
 ##### Interpretation
 
-Based on a visual inspection, there's likely no major differences in exam points based on gender.
+Based on a visual inspection, there's likely no major differences in exam points based on gender. Fairly symmetrical distributions.
 
 #### **Deep learning**
 
@@ -247,7 +285,7 @@ createScatterPlot(analysisDataset$deep,displayName="Deep learning")
 
 ##### Interpretation
 
-No significant correlation here.
+No significant correlation here. Normal distributions.
 
 
 #### **Superficial learning**
@@ -262,7 +300,7 @@ createScatterPlot(analysisDataset$surf,displayName="Superficial learning")
 
 ##### Interpretation
 
-Overall trending negative correlation.
+Overall trending negative correlation. Fairly normal distributions.
 
 
 #### **Strategic learning**
@@ -277,7 +315,7 @@ createScatterPlot(analysisDataset$stra,displayName="Strategic learning")
 
 ##### Interpretation
 
-Overall trending positive correlation.
+Overall trending positive correlation. Fairly normal distributions.
 
 
 ## 3: Building the regression model
@@ -335,11 +373,11 @@ summary(finalModel)
 
 ````
 
-From this model we can see that the predicted score in the exam goes up 3.53 points (95% CI: 2.41 - 4.64, p < 0.001) points for every increase of one in the student's attitude. The multiple R squared is actually
-equal to "singular" R squared in this case as the final model is no longer a multiple regression due to dropping out the insignificant predictors
+From this model we can see that the predicted score in the exam goes up 3.53 points (95% CI: 2.41 - 4.64, p < 0.001) for every increase of one unit in the student's attitude. 
 
 The resulting regression model written out with scalar values is: points = 3.53 * attitude + 11.64
 
+The multiple R squared is actually equal to "singular" R squared in this case as the final model is no longer a multiple regression due to dropping out the insignificant predictors.
 The R squared signifies the proportion of variance in exam points that our model is able to explain. In this case 19%.
 
 ## 5: Model validation
