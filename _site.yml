@@ -7,8 +7,11 @@ navbar:
       icon: fa-home
       href: index.html
     - text: "Linear regression"
-      icon: fa-info
+      icon: fa-chart-line
       href: chapter2.html
+    - text: "Logistic regression"
+      icon: fa-shipping-fast
+      href: chapter3.html
 output:
   html_document:
     theme: lumen

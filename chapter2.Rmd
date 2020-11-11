@@ -1,6 +1,6 @@
 ---
 title: "Linear regression"
-date: "*`r Sys.Date()`*"
+date: "*2020-11-06*"
 output:
   html_document:
     toc: false
@@ -116,7 +116,7 @@ Below you can see a summary table of the data:
 library(gtsummary)
 
 
-#Print a summary table of the data with gender as the contrast. Also add a "overall" column
+#Print a summary table of the data with gender as the contrast. Also add an "overall" column
 tbl_summary(analysisDataset,by = gender) %>% add_overall() 
 
 

@@ -1,0 +1,14 @@
+---
+title: "Logistic regression"
+date: "*2020-11-11*"
+output:
+  html_document:
+    toc: true
+    toc_float:
+        smooth_scroll: true
+        collapsed: false
+    toc_depth: 2
+    number_sections: true
+
+---
+
