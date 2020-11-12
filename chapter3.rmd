@@ -12,6 +12,8 @@ output:
 
 ---
 
+***
+
 # Description of data
 
 The data set used this exercise has been previously parsed from [this](https://archive.ics.uci.edu/ml/datasets/Student+Performance) file using an R script available [here](https://github.com/MB-Finski/IODS-project/data).
@@ -444,13 +446,7 @@ while(i < ncol(bare_dataset)) {
 
 }
 
-my_huge_reg_model <- glm(high_use ~ failures + absences + sex, data = bare_dataset, family = "binomial")
-
-cv.glm(data = bare_dataset,
-                          cost = cost_function,
-                          glmfit = my_huge_reg_model,
-                          K = 10)$delta[1]
-
+#Print the requested plot comparing training and testing errors
 comparison_plot <- ggplot(data = comparison_table, aes(x = n_regressors, y = error, group = error_type, color = error_type))
 comparison_plot <- comparison_plot + geom_line() + geom_point()
 comparison_plot <- comparison_plot + ggtitle("Training and testing errors vs number of regressors")
@@ -463,5 +459,11 @@ comparison_plot
 ***
 
 As is evident from the comparison graph, the increasing number of regressors leads to overfitting of the data. I.e. 
-the models become too complex and begin to describe spurious rather than true associations in the data. The "sweet spot"
-for the number of regressors in our data seems to be around 5 or 6 predictors/regressors.
+the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever smaller with
+the increasing number of regressors (this would be true even with random variables as predictors). 
+
+Yet, the testing error starts to grow with larger numbers of 
+regressors after reaching a minimum at around 5 regressors. This is a result of the decreasing external validity of the overfitted models -> i.e. the predictions
+of these models are not generalizable despite the very low testing errors.
+
+The "sweet spot" for the number of regressors in our data seems to be around 5 or 6 predictors/regressors.

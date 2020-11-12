@@ -1,0 +1,3095 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+<meta name="date" content="2020-11-12" />
+
+<title>Chapter 3: Logistic regression</title>
+
+<script src="site_libs/header-attrs-2.5/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/lumen.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/anchor-sections-1.0/anchor-sections.css" rel="stylesheet" />
+<script src="site_libs/anchor-sections-1.0/anchor-sections.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 54px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h2 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h3 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h4 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h5 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h6 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">My IODS project page</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+    Introduction
+  </a>
+</li>
+<li>
+  <a href="chapter2.html">
+    <span class="fa fa-chart-line"></span>
+     
+    Linear regression
+  </a>
+</li>
+<li>
+  <a href="chapter3.html">
+    <span class="fa fa-shipping-fast"></span>
+     
+    Logistic regression
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Chapter 3: Logistic regression</h1>
+<h4 class="date"><em>2020-11-12</em></h4>
+
+</div>
+
+
+<div id="description-of-data" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Description of data</h1>
+<p>The data set used this exercise has been previously parsed from <a href="https://archive.ics.uci.edu/ml/datasets/Student+Performance">this</a> file using an R script available <a href="https://github.com/MB-Finski/IODS-project/data">here</a>.</p>
+<p>The original purpose of the study was to find factors associated with the students’ school performance. The parsed data consists of students in two Portugese schools. For the purposes of the study the background and alcohol consumption of the students was recorded through questionnaires. The students’ performance in mathematics and Portugese language was collected from school reports. The scores for either subject were combined in the above data handling script. A more exhaustive metadata is available <a href="https://archive.ics.uci.edu/ml/datasets/Student+Performance">here</a>.</p>
+<hr />
+<div id="variable-decoding" class="section level2" number="1.1">
+<h2 number="1.1"><span class="header-section-number">1.1</span> Variable decoding</h2>
+<p>For an explanation of the individual variables, please, refer to the following:</p>
+<hr />
+<table>
+<colgroup>
+<col width="18%" />
+<col width="81%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable name</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>school</em></td>
+<td>Student’s school (either GP or MS)</td>
+</tr>
+<tr class="even">
+<td><em>sex</em></td>
+<td>Gender</td>
+</tr>
+<tr class="odd">
+<td><em>age</em></td>
+<td>Age of the student</td>
+</tr>
+<tr class="even">
+<td><em>address</em></td>
+<td>Student’s residence as binary of urban (U) versus rural (R)</td>
+</tr>
+<tr class="odd">
+<td><em>famsize</em></td>
+<td>Binary of family size: less than three LE3 versus greater than three (GT3)</td>
+</tr>
+<tr class="even">
+<td><em>Pstatus</em></td>
+<td>Parent’s cohabitation status: together (T) versus apart (A)</td>
+</tr>
+<tr class="odd">
+<td><em>Medu</em></td>
+<td>Mother’s education (numeric: 0 - none, 1 - primary education (4th grade), 2 - 5th to 9th grade, 3 - secondary education or 4 - higher education)</td>
+</tr>
+<tr class="even">
+<td><em>Fedu</em></td>
+<td>Father’s education (numeric: categories identical to above)</td>
+</tr>
+<tr class="odd">
+<td><em>Mjob</em></td>
+<td>Mother’s job (nominal: ‘teacher’, ‘health’ care related, civil ‘services’ (e.g. administrative or police), ‘at_home’ or ‘other’)</td>
+</tr>
+<tr class="even">
+<td><em>Fjob</em></td>
+<td>Father’s job (nominal: see categories above)</td>
+</tr>
+<tr class="odd">
+<td><em>reason</em></td>
+<td>Reason to choose this school (nominal: close to ‘home’, school ‘reputation’, ‘course’ preference or ‘other’)</td>
+</tr>
+<tr class="even">
+<td><em>guardian</em></td>
+<td>Student’s guardian (nominal: ‘mother’, ‘father’ or ‘other’)</td>
+</tr>
+<tr class="odd">
+<td><em>traveltime</em></td>
+<td>Home to school travel time (numeric: 1 - &lt;15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - &gt;1 hour)</td>
+</tr>
+<tr class="even">
+<td><em>studytime</em></td>
+<td>Weekly study time (numeric: 1 - &lt;2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - &gt;10 hours)</td>
+</tr>
+<tr class="odd">
+<td><em>failures</em></td>
+<td>Number of past class failures (numeric: n if 1&lt;=n&lt;3, else 4)</td>
+</tr>
+<tr class="even">
+<td><em>schoolsup</em></td>
+<td>Extra educational support (binary: yes or no)</td>
+</tr>
+<tr class="odd">
+<td><em>famsup</em></td>
+<td>Family educational support (binary: yes or no)</td>
+</tr>
+<tr class="even">
+<td><em>paid</em></td>
+<td>Extra paid classes within the course subject (Math or Portuguese) (binary: yes or no)</td>
+</tr>
+<tr class="odd">
+<td><em>activities</em></td>
+<td>Extra-curricular activities (binary: yes or no)</td>
+</tr>
+<tr class="even">
+<td><em>nursery</em></td>
+<td>Attended nursery school (binary: yes or no)</td>
+</tr>
+<tr class="odd">
+<td><em>higher</em></td>
+<td>Wants to take higher education (binary: yes or no)</td>
+</tr>
+<tr class="even">
+<td><em>internet</em></td>
+<td>Internet access at home (binary: yes or no)</td>
+</tr>
+<tr class="odd">
+<td><em>romantic</em></td>
+<td>With a romantic relationship (binary: yes or no)</td>
+</tr>
+<tr class="even">
+<td><em>famrel</em></td>
+<td>Quality of family relationships (numeric: from 1 - very bad to 5 - excellent)</td>
+</tr>
+<tr class="odd">
+<td><em>freetime</em></td>
+<td>Free time after school (numeric: from 1 - very low to 5 - very high)</td>
+</tr>
+<tr class="even">
+<td><em>goout</em></td>
+<td>Going out with friends (numeric: from 1 - very low to 5 - very high)</td>
+</tr>
+<tr class="odd">
+<td><em>Dalc</em></td>
+<td>Workday alcohol consumption (numeric: from 1 - very low to 5 - very high)</td>
+</tr>
+<tr class="even">
+<td><em>Walc</em></td>
+<td>Weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)</td>
+</tr>
+<tr class="odd">
+<td><em>health</em></td>
+<td>Current health status (numeric: from 1 - very bad to 5 - very good)</td>
+</tr>
+<tr class="even">
+<td><em>absences</em></td>
+<td>Number of school absences (numeric: from 0 to 93)</td>
+</tr>
+<tr class="odd">
+<td><em>G1</em></td>
+<td>First period combined grade (numeric: from 0 to 20)</td>
+</tr>
+<tr class="even">
+<td><em>G2</em></td>
+<td>Second period grade (numeric: from 0 to 20)</td>
+</tr>
+<tr class="odd">
+<td><em>G3</em></td>
+<td>Final grade (numeric: from 0 to 20, output target)</td>
+</tr>
+<tr class="even">
+<td><em>alc_use</em></td>
+<td>Average of Dalc and Walc</td>
+</tr>
+<tr class="odd">
+<td><em>high_use</em></td>
+<td>Binary: TRUE if alc_use &gt; 2, FALSE otherwise</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<pre class="r"><code>#Read the alc_data -table
+alc_data &lt;- read.table(&quot;http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt&quot;, stringsAsFactors = TRUE, sep = &quot;,&quot;,header = TRUE)
+
+#... and print out the summray of variable names as requested, although
+#the text output is quite ugly:
+str(alc_data)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    382 obs. of  35 variables:
+##  $ school    : Factor w/ 2 levels &quot;GP&quot;,&quot;MS&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ sex       : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 1 1 1 1 1 2 2 1 2 2 ...
+##  $ age       : int  18 17 15 15 16 16 16 17 15 15 ...
+##  $ address   : Factor w/ 2 levels &quot;R&quot;,&quot;U&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ famsize   : Factor w/ 2 levels &quot;GT3&quot;,&quot;LE3&quot;: 1 1 2 1 1 2 2 1 2 1 ...
+##  $ Pstatus   : Factor w/ 2 levels &quot;A&quot;,&quot;T&quot;: 1 2 2 2 2 2 2 1 1 2 ...
+##  $ Medu      : int  4 1 1 4 3 4 2 4 3 3 ...
+##  $ Fedu      : int  4 1 1 2 3 3 2 4 2 4 ...
+##  $ Mjob      : Factor w/ 5 levels &quot;at_home&quot;,&quot;health&quot;,..: 1 1 1 2 3 4 3 3 4 3 ...
+##  $ Fjob      : Factor w/ 5 levels &quot;at_home&quot;,&quot;health&quot;,..: 5 3 3 4 3 3 3 5 3 3 ...
+##  $ reason    : Factor w/ 4 levels &quot;course&quot;,&quot;home&quot;,..: 1 1 3 2 2 4 2 2 2 2 ...
+##  $ nursery   : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 2 1 2 2 2 2 2 2 2 2 ...
+##  $ internet  : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 2 2 2 1 2 2 1 2 2 ...
+##  $ guardian  : Factor w/ 3 levels &quot;father&quot;,&quot;mother&quot;,..: 2 1 2 2 1 2 2 2 2 2 ...
+##  $ traveltime: int  2 1 1 1 1 1 1 2 1 1 ...
+##  $ studytime : int  2 2 2 3 2 2 2 2 2 2 ...
+##  $ failures  : int  0 0 3 0 0 0 0 0 0 0 ...
+##  $ schoolsup : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 2 1 2 1 1 1 1 2 1 1 ...
+##  $ famsup    : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 2 1 2 2 2 1 2 2 2 ...
+##  $ paid      : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 2 2 2 2 1 1 2 2 ...
+##  $ activities: Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 1 2 1 2 1 1 1 2 ...
+##  $ higher    : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ romantic  : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 1 2 1 1 1 1 1 1 ...
+##  $ famrel    : int  4 5 4 3 4 5 4 4 4 5 ...
+##  $ freetime  : int  3 3 3 2 3 4 4 1 2 5 ...
+##  $ goout     : int  4 3 2 2 2 2 4 4 2 1 ...
+##  $ Dalc      : int  1 1 2 1 1 1 1 1 1 1 ...
+##  $ Walc      : int  1 1 3 1 2 2 1 1 1 1 ...
+##  $ health    : int  3 3 3 5 5 5 3 1 1 5 ...
+##  $ absences  : int  6 4 10 2 4 10 0 6 0 0 ...
+##  $ G1        : int  5 5 7 15 6 15 12 6 16 14 ...
+##  $ G2        : int  6 5 8 14 10 15 12 5 18 15 ...
+##  $ G3        : int  6 6 10 15 10 15 11 6 19 15 ...
+##  $ alc_use   : num  1 1 2.5 1 1.5 1.5 1 1 1 1 ...
+##  $ high_use  : logi  FALSE FALSE TRUE FALSE FALSE FALSE ...</code></pre>
+<hr />
+</div>
+<div id="summary-table-and-data-exploration" class="section level2" number="1.2">
+<h2 number="1.2"><span class="header-section-number">1.2</span> Summary table and data exploration</h2>
+<p>Let’s scope out the variables with “high_use” as contrast to identify variables that may have an association with alcohol use.</p>
+<p>Please note, I have elected to treat the Likert scale variables as scale variables here so I won’t factorize them.</p>
+<pre class="r"><code>library(gtsummary)
+
+continuous_vars = list(c(age,Medu,Fedu,failures,famrel, freetime, goout,Dalc,Walc,health,absences, G1, G2, G3, alc_use) ~ &quot;continuous&quot;)
+
+#Print a summary table of the data with high_use as the contrast. Also add an &quot;overall&quot; column
+my_contrast_table &lt;- tbl_summary(alc_data,
+                                by = high_use, 
+                                digits = all_continuous() ~ 2, 
+                                statistic = list(all_continuous() ~ &quot;{mean} ({sd})&quot;,
+                                all_categorical() ~ &quot;{n} / {N} ({p}%)&quot;),
+                                type = continuous_vars) 
+
+#Add some missing elements to the table and print it out
+my_contrast_table %&gt;% add_overall() %&gt;% bold_labels() %&gt;% add_p()</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#kwqqieaiyq .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#kwqqieaiyq .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#kwqqieaiyq .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#kwqqieaiyq .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#kwqqieaiyq .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#kwqqieaiyq .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#kwqqieaiyq .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#kwqqieaiyq .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#kwqqieaiyq .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#kwqqieaiyq .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#kwqqieaiyq .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#kwqqieaiyq .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#kwqqieaiyq .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#kwqqieaiyq .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kwqqieaiyq .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kwqqieaiyq .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#kwqqieaiyq .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#kwqqieaiyq .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kwqqieaiyq .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#kwqqieaiyq .gt_left {
+  text-align: left;
+}
+
+#kwqqieaiyq .gt_center {
+  text-align: center;
+}
+
+#kwqqieaiyq .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#kwqqieaiyq .gt_font_normal {
+  font-weight: normal;
+}
+
+#kwqqieaiyq .gt_font_bold {
+  font-weight: bold;
+}
+
+#kwqqieaiyq .gt_font_italic {
+  font-style: italic;
+}
+
+#kwqqieaiyq .gt_super {
+  font-size: 65%;
+}
+
+#kwqqieaiyq .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="kwqqieaiyq" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Overall</strong>, N = 382<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>FALSE</strong>, N = 270<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>TRUE</strong>, N = 112<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong><sup class="gt_footnote_marks">2</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">school</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.5</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">GP</td>
+      <td class="gt_row gt_center">342 / 382 (90%)</td>
+      <td class="gt_row gt_center">244 / 270 (90%)</td>
+      <td class="gt_row gt_center">98 / 112 (88%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">MS</td>
+      <td class="gt_row gt_center">40 / 382 (10%)</td>
+      <td class="gt_row gt_center">26 / 270 (9.6%)</td>
+      <td class="gt_row gt_center">14 / 112 (12%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sex</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">F</td>
+      <td class="gt_row gt_center">198 / 382 (52%)</td>
+      <td class="gt_row gt_center">157 / 270 (58%)</td>
+      <td class="gt_row gt_center">41 / 112 (37%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">M</td>
+      <td class="gt_row gt_center">184 / 382 (48%)</td>
+      <td class="gt_row gt_center">113 / 270 (42%)</td>
+      <td class="gt_row gt_center">71 / 112 (63%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">age</td>
+      <td class="gt_row gt_center">16.59 (1.17)</td>
+      <td class="gt_row gt_center">16.51 (1.15)</td>
+      <td class="gt_row gt_center">16.78 (1.21)</td>
+      <td class="gt_row gt_center">0.052</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">address</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.063</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">R</td>
+      <td class="gt_row gt_center">81 / 382 (21%)</td>
+      <td class="gt_row gt_center">50 / 270 (19%)</td>
+      <td class="gt_row gt_center">31 / 112 (28%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">U</td>
+      <td class="gt_row gt_center">301 / 382 (79%)</td>
+      <td class="gt_row gt_center">220 / 270 (81%)</td>
+      <td class="gt_row gt_center">81 / 112 (72%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">famsize</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.13</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">GT3</td>
+      <td class="gt_row gt_center">278 / 382 (73%)</td>
+      <td class="gt_row gt_center">203 / 270 (75%)</td>
+      <td class="gt_row gt_center">75 / 112 (67%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">LE3</td>
+      <td class="gt_row gt_center">104 / 382 (27%)</td>
+      <td class="gt_row gt_center">67 / 270 (25%)</td>
+      <td class="gt_row gt_center">37 / 112 (33%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Pstatus</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.9</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">A</td>
+      <td class="gt_row gt_center">38 / 382 (9.9%)</td>
+      <td class="gt_row gt_center">26 / 270 (9.6%)</td>
+      <td class="gt_row gt_center">12 / 112 (11%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">T</td>
+      <td class="gt_row gt_center">344 / 382 (90%)</td>
+      <td class="gt_row gt_center">244 / 270 (90%)</td>
+      <td class="gt_row gt_center">100 / 112 (89%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Medu</td>
+      <td class="gt_row gt_center">2.81 (1.09)</td>
+      <td class="gt_row gt_center">2.81 (1.07)</td>
+      <td class="gt_row gt_center">2.80 (1.13)</td>
+      <td class="gt_row gt_center">>0.9</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Fedu</td>
+      <td class="gt_row gt_center">2.57 (1.10)</td>
+      <td class="gt_row gt_center">2.56 (1.09)</td>
+      <td class="gt_row gt_center">2.58 (1.11)</td>
+      <td class="gt_row gt_center">0.9</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Mjob</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">>0.9</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">at_home</td>
+      <td class="gt_row gt_center">53 / 382 (14%)</td>
+      <td class="gt_row gt_center">36 / 270 (13%)</td>
+      <td class="gt_row gt_center">17 / 112 (15%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">health</td>
+      <td class="gt_row gt_center">33 / 382 (8.6%)</td>
+      <td class="gt_row gt_center">23 / 270 (8.5%)</td>
+      <td class="gt_row gt_center">10 / 112 (8.9%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other</td>
+      <td class="gt_row gt_center">138 / 382 (36%)</td>
+      <td class="gt_row gt_center">101 / 270 (37%)</td>
+      <td class="gt_row gt_center">37 / 112 (33%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">services</td>
+      <td class="gt_row gt_center">96 / 382 (25%)</td>
+      <td class="gt_row gt_center">67 / 270 (25%)</td>
+      <td class="gt_row gt_center">29 / 112 (26%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">teacher</td>
+      <td class="gt_row gt_center">62 / 382 (16%)</td>
+      <td class="gt_row gt_center">43 / 270 (16%)</td>
+      <td class="gt_row gt_center">19 / 112 (17%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Fjob</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">at_home</td>
+      <td class="gt_row gt_center">16 / 382 (4.2%)</td>
+      <td class="gt_row gt_center">14 / 270 (5.2%)</td>
+      <td class="gt_row gt_center">2 / 112 (1.8%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">health</td>
+      <td class="gt_row gt_center">17 / 382 (4.5%)</td>
+      <td class="gt_row gt_center">13 / 270 (4.8%)</td>
+      <td class="gt_row gt_center">4 / 112 (3.6%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other</td>
+      <td class="gt_row gt_center">211 / 382 (55%)</td>
+      <td class="gt_row gt_center">149 / 270 (55%)</td>
+      <td class="gt_row gt_center">62 / 112 (55%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">services</td>
+      <td class="gt_row gt_center">107 / 382 (28%)</td>
+      <td class="gt_row gt_center">69 / 270 (26%)</td>
+      <td class="gt_row gt_center">38 / 112 (34%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">teacher</td>
+      <td class="gt_row gt_center">31 / 382 (8.1%)</td>
+      <td class="gt_row gt_center">25 / 270 (9.3%)</td>
+      <td class="gt_row gt_center">6 / 112 (5.4%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">reason</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.024</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">course</td>
+      <td class="gt_row gt_center">140 / 382 (37%)</td>
+      <td class="gt_row gt_center">102 / 270 (38%)</td>
+      <td class="gt_row gt_center">38 / 112 (34%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">home</td>
+      <td class="gt_row gt_center">110 / 382 (29%)</td>
+      <td class="gt_row gt_center">73 / 270 (27%)</td>
+      <td class="gt_row gt_center">37 / 112 (33%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other</td>
+      <td class="gt_row gt_center">34 / 382 (8.9%)</td>
+      <td class="gt_row gt_center">18 / 270 (6.7%)</td>
+      <td class="gt_row gt_center">16 / 112 (14%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">reputation</td>
+      <td class="gt_row gt_center">98 / 382 (26%)</td>
+      <td class="gt_row gt_center">77 / 270 (29%)</td>
+      <td class="gt_row gt_center">21 / 112 (19%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">nursery</td>
+      <td class="gt_row gt_center">310 / 382 (81%)</td>
+      <td class="gt_row gt_center">224 / 270 (83%)</td>
+      <td class="gt_row gt_center">86 / 112 (77%)</td>
+      <td class="gt_row gt_center">0.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">internet</td>
+      <td class="gt_row gt_center">324 / 382 (85%)</td>
+      <td class="gt_row gt_center">227 / 270 (84%)</td>
+      <td class="gt_row gt_center">97 / 112 (87%)</td>
+      <td class="gt_row gt_center">0.6</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">guardian</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.3</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">father</td>
+      <td class="gt_row gt_center">91 / 382 (24%)</td>
+      <td class="gt_row gt_center">62 / 270 (23%)</td>
+      <td class="gt_row gt_center">29 / 112 (26%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">mother</td>
+      <td class="gt_row gt_center">275 / 382 (72%)</td>
+      <td class="gt_row gt_center">199 / 270 (74%)</td>
+      <td class="gt_row gt_center">76 / 112 (68%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other</td>
+      <td class="gt_row gt_center">16 / 382 (4.2%)</td>
+      <td class="gt_row gt_center">9 / 270 (3.3%)</td>
+      <td class="gt_row gt_center">7 / 112 (6.2%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">traveltime</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center">0.003</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1</td>
+      <td class="gt_row gt_center">250 / 382 (65%)</td>
+      <td class="gt_row gt_center">182 / 270 (67%)</td>
+      <td class="gt_row gt_center">68 / 112 (61%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">2</td>
+      <td class="gt_row gt_center">103 / 382 (27%)</td>
+      <td class="gt_row gt_center">76 / 270 (28%)</td>
+      <td class="gt_row gt_center">27 / 112 (24%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">3</td>
+      <td class="gt_row gt_center">21 / 382 (5.5%)</td>
+      <td class="gt_row gt_center">10 / 270 (3.7%)</td>
+      <td class="gt_row gt_center">11 / 112 (9.8%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">4</td>
+      <td class="gt_row gt_center">8 / 382 (2.1%)</td>
+      <td class="gt_row gt_center">2 / 270 (0.7%)</td>
+      <td class="gt_row gt_center">6 / 112 (5.4%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">studytime</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1</td>
+      <td class="gt_row gt_center">103 / 382 (27%)</td>
+      <td class="gt_row gt_center">60 / 270 (22%)</td>
+      <td class="gt_row gt_center">43 / 112 (38%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">2</td>
+      <td class="gt_row gt_center">190 / 382 (50%)</td>
+      <td class="gt_row gt_center">133 / 270 (49%)</td>
+      <td class="gt_row gt_center">57 / 112 (51%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">3</td>
+      <td class="gt_row gt_center">62 / 382 (16%)</td>
+      <td class="gt_row gt_center">54 / 270 (20%)</td>
+      <td class="gt_row gt_center">8 / 112 (7.1%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">4</td>
+      <td class="gt_row gt_center">27 / 382 (7.1%)</td>
+      <td class="gt_row gt_center">23 / 270 (8.5%)</td>
+      <td class="gt_row gt_center">4 / 112 (3.6%)</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">failures</td>
+      <td class="gt_row gt_center">0.29 (0.73)</td>
+      <td class="gt_row gt_center">0.22 (0.64)</td>
+      <td class="gt_row gt_center">0.46 (0.89)</td>
+      <td class="gt_row gt_center">0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">schoolsup</td>
+      <td class="gt_row gt_center">51 / 382 (13%)</td>
+      <td class="gt_row gt_center">39 / 270 (14%)</td>
+      <td class="gt_row gt_center">12 / 112 (11%)</td>
+      <td class="gt_row gt_center">0.4</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">famsup</td>
+      <td class="gt_row gt_center">238 / 382 (62%)</td>
+      <td class="gt_row gt_center">172 / 270 (64%)</td>
+      <td class="gt_row gt_center">66 / 112 (59%)</td>
+      <td class="gt_row gt_center">0.4</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">paid</td>
+      <td class="gt_row gt_center">177 / 382 (46%)</td>
+      <td class="gt_row gt_center">121 / 270 (45%)</td>
+      <td class="gt_row gt_center">56 / 112 (50%)</td>
+      <td class="gt_row gt_center">0.4</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">activities</td>
+      <td class="gt_row gt_center">201 / 382 (53%)</td>
+      <td class="gt_row gt_center">148 / 270 (55%)</td>
+      <td class="gt_row gt_center">53 / 112 (47%)</td>
+      <td class="gt_row gt_center">0.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">higher</td>
+      <td class="gt_row gt_center">364 / 382 (95%)</td>
+      <td class="gt_row gt_center">261 / 270 (97%)</td>
+      <td class="gt_row gt_center">103 / 112 (92%)</td>
+      <td class="gt_row gt_center">0.087</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">romantic</td>
+      <td class="gt_row gt_center">121 / 382 (32%)</td>
+      <td class="gt_row gt_center">88 / 270 (33%)</td>
+      <td class="gt_row gt_center">33 / 112 (29%)</td>
+      <td class="gt_row gt_center">0.6</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">famrel</td>
+      <td class="gt_row gt_center">3.94 (0.92)</td>
+      <td class="gt_row gt_center">4.01 (0.91)</td>
+      <td class="gt_row gt_center">3.76 (0.93)</td>
+      <td class="gt_row gt_center">0.006</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">freetime</td>
+      <td class="gt_row gt_center">3.22 (0.99)</td>
+      <td class="gt_row gt_center">3.13 (0.99)</td>
+      <td class="gt_row gt_center">3.46 (0.95)</td>
+      <td class="gt_row gt_center">0.003</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">goout</td>
+      <td class="gt_row gt_center">3.11 (1.13)</td>
+      <td class="gt_row gt_center">2.86 (1.04)</td>
+      <td class="gt_row gt_center">3.73 (1.10)</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Dalc</td>
+      <td class="gt_row gt_center">1.47 (0.89)</td>
+      <td class="gt_row gt_center">1.07 (0.26)</td>
+      <td class="gt_row gt_center">2.45 (1.09)</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Walc</td>
+      <td class="gt_row gt_center">2.28 (1.28)</td>
+      <td class="gt_row gt_center">1.61 (0.74)</td>
+      <td class="gt_row gt_center">3.89 (0.79)</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">health</td>
+      <td class="gt_row gt_center">3.58 (1.40)</td>
+      <td class="gt_row gt_center">3.52 (1.40)</td>
+      <td class="gt_row gt_center">3.72 (1.40)</td>
+      <td class="gt_row gt_center">0.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">absences</td>
+      <td class="gt_row gt_center">5.32 (7.63)</td>
+      <td class="gt_row gt_center">4.23 (6.50)</td>
+      <td class="gt_row gt_center">7.96 (9.33)</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">G1</td>
+      <td class="gt_row gt_center">10.86 (3.35)</td>
+      <td class="gt_row gt_center">11.09 (3.48)</td>
+      <td class="gt_row gt_center">10.31 (2.97)</td>
+      <td class="gt_row gt_center">0.043</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">G2</td>
+      <td class="gt_row gt_center">10.71 (3.83)</td>
+      <td class="gt_row gt_center">10.87 (4.07)</td>
+      <td class="gt_row gt_center">10.33 (3.17)</td>
+      <td class="gt_row gt_center">0.058</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">G3</td>
+      <td class="gt_row gt_center">10.39 (4.69)</td>
+      <td class="gt_row gt_center">10.49 (5.04)</td>
+      <td class="gt_row gt_center">10.13 (3.72)</td>
+      <td class="gt_row gt_center">0.086</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">alc_use</td>
+      <td class="gt_row gt_center">1.88 (0.99)</td>
+      <td class="gt_row gt_center">1.34 (0.40)</td>
+      <td class="gt_row gt_center">3.17 (0.76)</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="5">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Statistics presented: n / N (%); Mean (SD)
+          <br />
+        </p>
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>2</em>
+          </sup>
+           
+          Statistical tests performed: chi-square test of independence; Wilcoxon rank-sum test; Fisher's exact test
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+<hr />
+<div id="interpretation" class="section level3" number="1.2.1">
+<h3 number="1.2.1"><span class="header-section-number">1.2.1</span> Interpretation</h3>
+<hr />
+<p>First, it should be ephasized that while I did print out the p-values for the explorative statistical analyses, the p-values should not be mistaken for effect sizes! I.e. direct direct comparisons of the variables performance as a regressor for “high_use” should not be made based on the p-values alone.</p>
+<p>However, odds ratios are reversible for outcome and potential exposure (i.e. the OR for an outcome given an exposure is equal to the OR of an exposure given an outcome). This means that the above strategy is valid for scoping out potential regressors.</p>
+<p>As a side note, beyond the scope of this chapte, we may be missing out on potential interactions in the data with this type of modeling strategy. For example, the data is from two different schools which would suggest that we’d be better off using a hierachical modeling strategy for the data. Yet, as mentioned, this is beyond the scope of the assignment.</p>
+<p>Finally, the type of <em>a priori</em> exploration we used for identifying the potential regressors increases the risk of finding spurious associations in our data. Therefore, we should clearly state that our findings of any subsequent analyses are explorative in nature.</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="choosing-the-potential-regressors" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Choosing the potential regressors</h1>
+<hr />
+<p>Based on explorative analyses above, I chose the following variables as regressors:</p>
+<ol style="list-style-type: decimal">
+<li>sex</li>
+<li>absences</li>
+<li>goout</li>
+<li>studytime</li>
+</ol>
+<hr />
+<p>A viable hypothesis for how each of these variables might be associated with alcohol use can be formed:</p>
+<ol style="list-style-type: decimal">
+<li>Males have traditionally been viewed as more prone to drinking alcohol.</li>
+<li>Absences may be the result of or the enabler of excessive drinking.</li>
+<li>Going out with friends and socializing may be linked with increased alcohol use.</li>
+<li>Students who study hard don’t have time to drink.</li>
+</ol>
+<hr />
+<div id="graphical-inspection-of-regressors" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> (Graphical) Inspection of regressors</h2>
+<hr />
+<p>Let’s print a more compact table compared to above with <em>cross tabulations</em> of the categorical regressors:</p>
+<hr />
+<pre class="r"><code>#Create a subset table of the variables of interest
+alc_subset &lt;- alc_data %&gt;% select(sex, high_use, absences, goout, studytime)
+
+continuous_vars = list(c(absences) ~ &quot;continuous&quot;)
+
+
+#Print a summary table of the data with high_use as the contrast. Also add an &quot;overall&quot; column
+my_contrast_table &lt;- tbl_summary(alc_subset,
+                                by = high_use, 
+                                digits = all_continuous() ~ 2, 
+                                statistic = list(all_continuous() ~ &quot;{mean} ({sd})&quot;,
+                                all_categorical() ~ &quot;{n} / {N} ({p}%)&quot;),
+                                type = continuous_vars) 
+
+#Add some missing elements to the table and print it out
+my_contrast_table %&gt;% add_overall() %&gt;% bold_labels()</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#yjfdujpwkm .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#yjfdujpwkm .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#yjfdujpwkm .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#yjfdujpwkm .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#yjfdujpwkm .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#yjfdujpwkm .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#yjfdujpwkm .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#yjfdujpwkm .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#yjfdujpwkm .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#yjfdujpwkm .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#yjfdujpwkm .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#yjfdujpwkm .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#yjfdujpwkm .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#yjfdujpwkm .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yjfdujpwkm .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#yjfdujpwkm .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#yjfdujpwkm .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#yjfdujpwkm .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#yjfdujpwkm .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#yjfdujpwkm .gt_left {
+  text-align: left;
+}
+
+#yjfdujpwkm .gt_center {
+  text-align: center;
+}
+
+#yjfdujpwkm .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#yjfdujpwkm .gt_font_normal {
+  font-weight: normal;
+}
+
+#yjfdujpwkm .gt_font_bold {
+  font-weight: bold;
+}
+
+#yjfdujpwkm .gt_font_italic {
+  font-style: italic;
+}
+
+#yjfdujpwkm .gt_super {
+  font-size: 65%;
+}
+
+#yjfdujpwkm .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="yjfdujpwkm" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Overall</strong>, N = 382<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>FALSE</strong>, N = 270<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>TRUE</strong>, N = 112<sup class="gt_footnote_marks">1</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sex</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">F</td>
+      <td class="gt_row gt_center">198 / 382 (52%)</td>
+      <td class="gt_row gt_center">157 / 270 (58%)</td>
+      <td class="gt_row gt_center">41 / 112 (37%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">M</td>
+      <td class="gt_row gt_center">184 / 382 (48%)</td>
+      <td class="gt_row gt_center">113 / 270 (42%)</td>
+      <td class="gt_row gt_center">71 / 112 (63%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">absences</td>
+      <td class="gt_row gt_center">5.32 (7.63)</td>
+      <td class="gt_row gt_center">4.23 (6.50)</td>
+      <td class="gt_row gt_center">7.96 (9.33)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">goout</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1</td>
+      <td class="gt_row gt_center">24 / 382 (6.3%)</td>
+      <td class="gt_row gt_center">21 / 270 (7.8%)</td>
+      <td class="gt_row gt_center">3 / 112 (2.7%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">2</td>
+      <td class="gt_row gt_center">99 / 382 (26%)</td>
+      <td class="gt_row gt_center">84 / 270 (31%)</td>
+      <td class="gt_row gt_center">15 / 112 (13%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">3</td>
+      <td class="gt_row gt_center">123 / 382 (32%)</td>
+      <td class="gt_row gt_center">100 / 270 (37%)</td>
+      <td class="gt_row gt_center">23 / 112 (21%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">4</td>
+      <td class="gt_row gt_center">82 / 382 (21%)</td>
+      <td class="gt_row gt_center">43 / 270 (16%)</td>
+      <td class="gt_row gt_center">39 / 112 (35%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">5</td>
+      <td class="gt_row gt_center">54 / 382 (14%)</td>
+      <td class="gt_row gt_center">22 / 270 (8.1%)</td>
+      <td class="gt_row gt_center">32 / 112 (29%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">studytime</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1</td>
+      <td class="gt_row gt_center">103 / 382 (27%)</td>
+      <td class="gt_row gt_center">60 / 270 (22%)</td>
+      <td class="gt_row gt_center">43 / 112 (38%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">2</td>
+      <td class="gt_row gt_center">190 / 382 (50%)</td>
+      <td class="gt_row gt_center">133 / 270 (49%)</td>
+      <td class="gt_row gt_center">57 / 112 (51%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">3</td>
+      <td class="gt_row gt_center">62 / 382 (16%)</td>
+      <td class="gt_row gt_center">54 / 270 (20%)</td>
+      <td class="gt_row gt_center">8 / 112 (7.1%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">4</td>
+      <td class="gt_row gt_center">27 / 382 (7.1%)</td>
+      <td class="gt_row gt_center">23 / 270 (8.5%)</td>
+      <td class="gt_row gt_center">4 / 112 (3.6%)</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Statistics presented: n / N (%); Mean (SD)
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+<hr />
+<div id="boxplot-of-absences" class="section level3" number="2.1.1">
+<h3 number="2.1.1"><span class="header-section-number">2.1.1</span> Boxplot of absences</h3>
+<hr />
+<p>Print boxplot of absences:</p>
+<pre class="r"><code>library(ggplot2)
+
+#Create the boxplot
+my_boxplot &lt;- ggplot(alc_data, aes(x = high_use, y = absences))+theme(legend.position=&quot;none&quot;)
+my_boxplot &lt;- my_boxplot + geom_boxplot(outlier.colour=&quot;black&quot;, outlier.shape=16, outlier.size=2, notch=FALSE)
+
+#Adjust outline color
+my_boxplot &lt;- my_boxplot + scale_color_manual(values=c(&quot;black&quot;,&quot;black&quot;))
+
+#Adjust fill color
+my_boxplot &lt;- my_boxplot + scale_fill_manual(values=c(&quot;#b4b4b4&quot;,&quot;#4e4e4e&quot;))
+
+#Set proper lables for both axes
+my_boxplot &lt;- my_boxplot + labs(x= &quot;High alcohol use&quot;, y = &quot;Absences&quot;,fill = &quot;&quot;)
+
+#Set the graph title
+my_boxplot &lt;- my_boxplot + ggtitle(&quot;Absences VS High alcohol use&quot;)
+
+#Print the plot
+my_boxplot</code></pre>
+<p><img src="chapter3_files/figure-html/unnamed-chunk-4-1.png" width="100%" /></p>
+<hr />
+</div>
+<div id="interpretation-of-cross-tabulations-and-boxplot" class="section level3" number="2.1.2">
+<h3 number="2.1.2"><span class="header-section-number">2.1.2</span> Interpretation of cross tabulations and boxplot</h3>
+<hr />
+<p>Our hypothesis forming was exploratory (see above) so we have by and large already covered this topic.</p>
+<p>The crosstabulations and the boxplot support the presented hypotheses for all our variables: there’s a clear association between high_use and all our chosen regressors. The distribution of the absences is understandably quite skewed, reminiscent of a chi-square distribution. This is usually not an issue with parametric statistical methods. There are, also, some potential outliers in both groups for absences.</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="logistic-regression" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Logistic regression</h1>
+<hr />
+<p>Create the logistic regression model:</p>
+<pre class="r"><code>my_reg_model &lt;- glm(high_use ~ absences + sex + goout + studytime, data = alc_data, family = &quot;binomial&quot;)
+
+tbl_regression(my_reg_model, exponentiate = TRUE) %&gt;% bold_labels()</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#nxaobvpsng .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#nxaobvpsng .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#nxaobvpsng .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#nxaobvpsng .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#nxaobvpsng .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#nxaobvpsng .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#nxaobvpsng .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#nxaobvpsng .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#nxaobvpsng .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#nxaobvpsng .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#nxaobvpsng .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#nxaobvpsng .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#nxaobvpsng .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#nxaobvpsng .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#nxaobvpsng .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#nxaobvpsng .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#nxaobvpsng .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#nxaobvpsng .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#nxaobvpsng .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#nxaobvpsng .gt_left {
+  text-align: left;
+}
+
+#nxaobvpsng .gt_center {
+  text-align: center;
+}
+
+#nxaobvpsng .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#nxaobvpsng .gt_font_normal {
+  font-weight: normal;
+}
+
+#nxaobvpsng .gt_font_bold {
+  font-weight: bold;
+}
+
+#nxaobvpsng .gt_font_italic {
+  font-style: italic;
+}
+
+#nxaobvpsng .gt_super {
+  font-size: 65%;
+}
+
+#nxaobvpsng .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="nxaobvpsng" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>OR</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>95% CI</strong><sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>p-value</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">absences</td>
+      <td class="gt_row gt_center">1.06</td>
+      <td class="gt_row gt_center">1.03, 1.10</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sex</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">F</td>
+      <td class="gt_row gt_center">&mdash;</td>
+      <td class="gt_row gt_center">&mdash;</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">M</td>
+      <td class="gt_row gt_center">2.25</td>
+      <td class="gt_row gt_center">1.33, 3.84</td>
+      <td class="gt_row gt_center">0.003</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">goout</td>
+      <td class="gt_row gt_center">2.10</td>
+      <td class="gt_row gt_center">1.67, 2.68</td>
+      <td class="gt_row gt_center"><0.001</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">studytime</td>
+      <td class="gt_row gt_center">0.64</td>
+      <td class="gt_row gt_center">0.45, 0.88</td>
+      <td class="gt_row gt_center">0.009</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="4">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          OR = Odds Ratio, CI = Confidence Interval
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+<pre class="r"><code>summary(my_reg_model)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = high_use ~ absences + sex + goout + studytime, 
+##     family = &quot;binomial&quot;, data = alc_data)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.7586  -0.7653  -0.4897   0.7254   2.5996  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -3.23486    0.59934  -5.397 6.76e-08 ***
+## absences     0.06269    0.01687   3.716 0.000202 ***
+## sexM         0.81167    0.26937   3.013 0.002585 ** 
+## goout        0.74151    0.12061   6.148 7.86e-10 ***
+## studytime   -0.45081    0.17155  -2.628 0.008594 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 462.21  on 381  degrees of freedom
+## Residual deviance: 374.08  on 377  degrees of freedom
+## AIC: 384.08
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<hr />
+<div id="interpretation-of-the-model" class="section level2" number="3.1">
+<h2 number="3.1"><span class="header-section-number">3.1</span> Interpretation of the model</h2>
+<hr />
+<p>In this case the intercept of the model is of no significant interest to us. All regressors have a statistically significant association with the response.</p>
+<p>As an example of interpreting the odds ratios; each increase of one in absences was associated with an odds ratio (OR) of 1.06 (95% CI 1.032 – 1.10) for high alchohol use.</p>
+<p>For the catecorigal variables we interpret the results as follows: male students had 2.29 (95% CI: 1.44 – 3.67) times greater odds at having high alcohol use than female students.</p>
+<p>It is crucial to note that this <strong>does not</strong> mean that a student with 1 absence was 1.06 times more likely to have high alcohol use compared to a student who had none! Odds ratios (usually) cannot be used to make inferences of relative probabilities. Only in some edge cases you can equate RRs and ORs (like under the rare disease assumption). We can simply state that the <em>odds</em> of having high alcohol use was 1.06 times grater for someone with 1 absence compared to a student with no absences.</p>
+<p>The numerical value of OR also does not equate to effect size. For example, the absolute odds ratio is very small for absences, but the effect size in this case is also related to the distribution of absences in the data: a student with 10 absences has an odds ratio of 1.06^10 = 1.79 for high alcohol use.</p>
+<p>While the exact odds ratios and even risk ratios can be calculated in our data sample, there remains uncertainty when making interferences from our data to more general populations. This uncertainty is described using the confidence intervals (CI) for our OR estimates. Various factors like regressor variance and sample size affect the confidence intervals.</p>
+<p>In conclusion, the data mostly confirms our hypotheses: absences, male gender, and going out were associated (OR &gt; 1) with high alcohol consumption. Increased studytime was associated with lesser odds (OR &lt; 1) at high alcohol consumption.</p>
+<hr />
+</div>
+</div>
+<div id="model-predictions-and-performance" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Model predictions and performance</h1>
+<hr />
+<p>Print a cross tabulation of outcome vs model prediction with marginal row and column:</p>
+<pre class="r"><code>library(&quot;dplyr&quot;)
+
+#Add a column model_probability for the outcome:
+alc_data &lt;- mutate(alc_data,model_probability = predict(my_reg_model, type = &quot;response&quot;))
+#Add a column with binary model_prediction:
+alc_data &lt;- mutate(alc_data,model_prediction = model_probability &gt; 0.5)
+
+#Print a cross tabulation
+tbl_cross(alc_data,row = high_use, col = model_prediction, percent =&quot;cell&quot;)</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#usaehszkal .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#usaehszkal .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#usaehszkal .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#usaehszkal .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#usaehszkal .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usaehszkal .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#usaehszkal .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#usaehszkal .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#usaehszkal .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#usaehszkal .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#usaehszkal .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#usaehszkal .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#usaehszkal .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#usaehszkal .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#usaehszkal .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#usaehszkal .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#usaehszkal .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#usaehszkal .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usaehszkal .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#usaehszkal .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usaehszkal .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#usaehszkal .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#usaehszkal .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usaehszkal .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#usaehszkal .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#usaehszkal .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#usaehszkal .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#usaehszkal .gt_left {
+  text-align: left;
+}
+
+#usaehszkal .gt_center {
+  text-align: center;
+}
+
+#usaehszkal .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#usaehszkal .gt_font_normal {
+  font-weight: normal;
+}
+
+#usaehszkal .gt_font_bold {
+  font-weight: bold;
+}
+
+#usaehszkal .gt_font_italic {
+  font-style: italic;
+}
+
+#usaehszkal .gt_super {
+  font-size: 65%;
+}
+
+#usaehszkal .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="usaehszkal" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2">
+        <span class="gt_column_spanner"><strong>model_prediction</strong></span>
+      </th>
+      <th class="gt_col_heading gt_center gt_columns_bottom_border" rowspan="2" colspan="1"><strong>Total</strong></th>
+    </tr>
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1">FALSE</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1">TRUE</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">high_use</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">FALSE</td>
+      <td class="gt_row gt_center">254 (66%)</td>
+      <td class="gt_row gt_center">16 (4.2%)</td>
+      <td class="gt_row gt_center">270 (71%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">TRUE</td>
+      <td class="gt_row gt_center">64 (17%)</td>
+      <td class="gt_row gt_center">48 (13%)</td>
+      <td class="gt_row gt_center">112 (29%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Total</td>
+      <td class="gt_row gt_center">318 (83%)</td>
+      <td class="gt_row gt_center">64 (17%)</td>
+      <td class="gt_row gt_center">382 (100%)</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+<hr />
+<p>Print a scatter plot visualizing predictions vs outcome:</p>
+<pre class="r"><code>my_scatter_plot &lt;- ggplot(alc_data, aes(x = model_probability, y = high_use, color = (model_prediction==high_use)))
+my_scatter_plot &lt;- my_scatter_plot+geom_point() + labs(x = &quot;Model probability&quot;, y = &quot;High alcohol use&quot;,color= &quot;Model prediction correct&quot;)
+my_scatter_plot</code></pre>
+<p><img src="chapter3_files/figure-html/unnamed-chunk-7-1.png" width="100%" /></p>
+<hr />
+<p>Calculate training error and compare the method to a guessing strategy:</p>
+<hr />
+<pre class="r"><code>#Calculate the precentage of wrong predictions:
+mean((alc_data$high_use != alc_data$model_prediction))</code></pre>
+<pre><code>## [1] 0.2094241</code></pre>
+<pre class="r"><code>#Just for &quot;shits and giggles&quot; run a rudimentary Monte Carlo simulation
+#with 1000000 runs to calculate the precentage of wrong predictions made
+#by quessing if a student has heavy alc use based on the knowlede of
+#high_alc use prevalence in our data
+
+#I.e. we calculate a &quot;guess_vector&quot; with the same proportion of true/false
+#guesses as the prevalence of high_alc in our data.
+
+#Place the correct vectors into separate variables to streamline everything
+#for the Monte Carlo loop:
+high_use &lt;- alc_data$high_use
+propability_of_heavy_alc &lt;- mean(high_use)
+n_of_students &lt;- length(high_use)
+
+i = 0
+mc_runs = 1000000
+mc_mean_pred_error = 0
+
+while(i &lt; mc_runs) {
+  i &lt;- i + 1
+
+  #Create a vector with random variables from 0 to 1
+  #Essentially this is a guess on the high_use status of each student
+  random_vector &lt;- runif(n_of_students, 0, 1)
+
+  #Convert the random variable to the corresponding random binary
+  guess_vector &lt;- (random_vector &lt;= propability_of_heavy_alc)
+
+  #Claculate the proportion of wrong guesses
+  mc_mean_pred_error &lt;- mc_mean_pred_error + mean((high_use != guess_vector))
+}
+#Calculate the mean
+mc_mean_pred_error &lt;- mc_mean_pred_error / mc_runs
+
+#Expected result derived arithmetically
+expected_result &lt;- 2 * (propability_of_heavy_alc * (1 - propability_of_heavy_alc))
+expected_result</code></pre>
+<pre><code>## [1] 0.4144623</code></pre>
+<pre class="r"><code>#Print the result of the Monte Carlo run:
+mc_mean_pred_error</code></pre>
+<pre><code>## [1] 0.4144607</code></pre>
+<pre class="r"><code>1- mean(alc_data$high_use)</code></pre>
+<pre><code>## [1] 0.7068063</code></pre>
+<hr />
+<div id="interpretation-of-model-performance" class="section level2" number="4.1">
+<h2 number="4.1"><span class="header-section-number">4.1</span> Interpretation of model performance</h2>
+<hr />
+<p>The training error of our model was about 21%. Our guessing strategy was intentionally non-optimal and resulted in the right guess about 59% of the time. The optimal guessing strategy would be to just guess that no student has high alcohol use which would result in a right guess about 71% of the time (or a wrong guess 29% of the time). So, our model had about 28% less wrong predictions than the “optimal” guessing strategy. However, this is only valid for the data our model was trained with and using fresh data would likely result in inferior performance.</p>
+<hr />
+</div>
+</div>
+<div id="bonus-1-ten-fold-cross-validation" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> BONUS 1: Ten-fold cross validation</h1>
+<hr />
+<pre class="r"><code>cost_function &lt;- function(response, probability) {
+  mean(response != (probability &gt; 0.5))
+}
+
+library(boot)
+cross_validation &lt;- cv.glm(data = alc_data, cost = cost_function, glmfit = my_reg_model, K = 10)
+
+# average number of wrong predictions in the cross validation
+cross_validation$delta[1]</code></pre>
+<pre><code>## [1] 0.2120419</code></pre>
+<hr />
+<p>Our logistic regression model smaller testing error (about 21%) compared to the Datacamp example (about 26%).</p>
+<p>There are various methods for selecting best subsets of variables for GLM and it is possible that an even better model can be found. However, (especially step-wise) selection of regression models from large datasets is extremely prone to bias!</p>
+<hr />
+</div>
+<div id="bonus-2-traning-vs-testing-error" class="section level1" number="6">
+<h1 number="6"><span class="header-section-number">6</span> BONUS 2: Traning vs testing error</h1>
+<hr />
+<pre class="r"><code>library(&quot;tibble&quot;)
+
+#Strip the alc_data table from all but the predictor variables and the response variable
+bare_dataset = select(alc_data, -c(Dalc,Walc,alc_use,model_probability,model_prediction))
+
+#Create a regression model with all possible predictors
+my_huge_reg_model &lt;- glm(high_use ~ ., data = bare_dataset, family = &quot;binomial&quot;)
+
+#Prepare a table to hold our pairs of training and testing errors
+comparison_table &lt;- data.frame(matrix(ncol=3,nrow=0, dimnames=list(NULL, c(&quot;error&quot;, &quot;error_type&quot;, &quot;n_regressors&quot;))))
+
+comparison_table$error_type &lt;- as.factor(comparison_table$error_type)
+
+#A loop for backward stepping our regression model
+i &lt;- 1
+while(i &lt; ncol(bare_dataset)) {
+  i &lt;- i + 1
+
+  #Calculate traning error for current regression model
+  probability &lt;- predict(my_huge_reg_model, type = &quot;response&quot;)
+  training_error &lt;- cost_function(bare_dataset$high_use, probability)
+
+  #Calculate testing error for current regression model
+  #using 10-fold cross validation
+  testing_error &lt;- cv.glm(data = bare_dataset,
+                          cost = cost_function,
+                          glmfit = my_huge_reg_model,
+                          K = 10)$delta[1]
+  
+  num_of_regressors &lt;- length(coef(my_huge_reg_model)) - 1
+
+  #Add the relevant data to our table
+  comparison_table &lt;- add_row(comparison_table, error = training_error,
+          error_type = &quot;Training error&quot;, 
+          n_regressors = num_of_regressors)
+  comparison_table &lt;- add_row(comparison_table, error = testing_error,
+          error_type = &quot;Testing error&quot;, 
+          n_regressors = num_of_regressors)
+
+  #Drop one variable out from our regression equation with backward stepping
+  #based on the Akaike Information Criteria (AIC).
+  #Set k=100 so we continue stepping even if we drop statistically
+  #significant regressors
+  my_huge_reg_model &lt;- step(my_huge_reg_model, direction = &quot;backward&quot;,steps = 1, k = 100, trace = 0)
+
+}
+
+#Print the requested plot comparing training and testing errors
+comparison_plot &lt;- ggplot(data = comparison_table, aes(x = n_regressors, y = error, group = error_type, color = error_type))
+comparison_plot &lt;- comparison_plot + geom_line() + geom_point()
+comparison_plot &lt;- comparison_plot + ggtitle(&quot;Training and testing errors vs number of regressors&quot;)
+comparison_plot &lt;- comparison_plot + labs(x = &quot;Number of predictors&quot;, y = &quot;Prediction error&quot;, color = &quot;&quot;)
+
+comparison_plot</code></pre>
+<p><img src="chapter3_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<hr />
+<p>As is evident from the comparison graph, the increasing number of regressors leads to overfitting of the data. I.e. the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever smaller with the increasing number of regressors (this would be true even with random variables as predictors).</p>
+<p>Yet, the testing error starts to grow with larger numbers of regressors after reaching a minimum at around 5 regressors. This is a result of the decreasing external validity of the overfitted models -&gt; i.e. the predictions of these models are not generalizable despite the very low testing errors.</p>
+<p>The “sweet spot” for the number of regressors in our data seems to be around 5 or 6 predictors/regressors.</p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
