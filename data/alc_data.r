@@ -53,13 +53,13 @@ while (ncol(select(data_alc, contains("."))) > 0) {
 str(data_alc)
 
 #Create alc_use variable as the average of Dalc and Walc
-data_alc <- mutate(data_alc, alc_use = Dalc + Walc / 2)
+data_alc <- mutate(data_alc, alc_use = (Dalc + Walc) / 2)
 
 #Create high_use variable which is true if alc_use > 2
-data_alc <- mutate(data_alc, high = alc_use > 2)
+data_alc <- mutate(data_alc, high_use = alc_use > 2)
 
 #Glimpse at the resulting data
 glimpse(data_alc)
 
 #Save data
-write.table(x = data_alc,file = ".\\data\\alc_data.txt")
+write.table(x = data_alc, file = ".\\data\\alc_data.txt")
