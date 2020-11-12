@@ -121,9 +121,10 @@ the p-values should not be mistaken for effect sizes! I.e. direct direct compari
 should not be made based on the p-values alone. 
 
 However, odds ratios are reversible for outcome and potential exposure (i.e. the OR for an outcome given an
-exposure is equal to the OR of an exposure given an outcome). This means that the above strategy is valid for scoping out potential regressors. 
+exposure is equal to the OR of an exposure given an outcome). This means that the strategy of finding a "reverse association" between our response and potential regressors
+is useful for identifying good regressors.
 
-As a side note, beyond the scope of this chapte, we may be missing out on potential interactions in the data
+As a side note, beyond the scope of this chapter, we may be missing out on potential interactions in the data
 with this type of modeling strategy. For example, the data is from two different schools which would suggest that we'd be better off using a hierachical
 modeling strategy for the data. Yet, as mentioned, this is beyond the scope of the assignment.
 
@@ -458,7 +459,7 @@ comparison_plot
 
 ***
 
-As is evident from the comparison graph, the increasing number of regressors leads to overfitting of the data. I.e. 
+As is evident from the comparison graph, the increasing number of regressors leads to overfitting. I.e. 
 the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever smaller with
 the increasing number of regressors (this would be true even with random variables as predictors). 
 
