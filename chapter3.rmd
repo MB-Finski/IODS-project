@@ -387,10 +387,10 @@ cross_validation$delta[1]
 
 ***
 
-Our logistic regression model smaller testing error (about 21%) compared to the
-Datacamp example (about 26%).
+Our logistic regression model had smaller testing error (about 21%) compared to the
+Datacamp example (about 26%) using 10-fold cross-validation.
 
-There are various methods for selecting best subsets of variables for GLM and it is possible that an even better model can be found.
+There are various methods for selecting best subsets of variables for GLM and it is likely that an even better model can be found.
 However, (especially step-wise) selection of regression models from large datasets is extremely prone to bias!
 
 ***
