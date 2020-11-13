@@ -3014,8 +3014,8 @@ comparison_plot &lt;- comparison_plot + labs(x = &quot;Number of predictors&quot
 comparison_plot</code></pre>
 <p><img src="chapter3_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <hr />
-<p>As is evident from the comparison graph, the increasing number of regressors leads to overfitting. I.e. the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever smaller with the increasing number of regressors (this would be true even with random variables as predictors).</p>
-<p>Yet, the testing error starts to grow with larger numbers of regressors after reaching a minimum at around 5 regressors. This is a result of the decreasing external validity of the overfitted models -&gt; i.e. the predictions of these models are not generalizable despite the very low testing errors.</p>
+<p>As is evident from the comparison graph, the increasing number of regressors leads to overfitting. I.e. the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever so slightly smaller with the increasing number of regressors (this would be true even with random variables as predictors).</p>
+<p>Yet, the testing error starts to grow with larger numbers of regressors after reaching a minimum at around 5 regressors. This is a result of the decreasing external validity of the overfitted models -&gt; i.e. the predictions of these models are not generalizable despite the very low training errors.</p>
 <p>The “sweet spot” for the number of regressors in our data seems to be around 5 or 6 predictors/regressors.</p>
 </div>
 
