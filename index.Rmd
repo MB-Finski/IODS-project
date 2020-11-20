@@ -18,3 +18,5 @@ After completing the introductory Datacamp lessons on R my first impressions are
 *   Judging by some peculiarities, I get the impression that R was developed mostly by data scientists rather than programmers.
     +   Firstly, the use of str as a shorthand for "structure" instead of "string" is odd.
     +   Secondly, indices start from 1 instead of 0. Admittedly, a few other programming languages like Fortran also break this convention.
+
+

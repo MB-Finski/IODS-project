@@ -12,6 +12,11 @@ output:
 
 ---
 
+```{r, echo=FALSE, results=FALSE}
+#Let's make our reports reproducible
+set.seed(134856791)
+```
+
 ***
 
 # Description of data
@@ -252,7 +257,7 @@ In this case the intercept of the model is of no significant interest to us. All
 
 As an example of interpreting the odds ratios; each increase of one in absences was associated with an odds ratio (OR) of 1.06 (95% CI 1.032 -- 1.10) for high alchohol use.
 
-For the catecorigal variables we interpret the results as follows: male students had 2.29 (95% CI: 1.44 -- 3.67) times greater odds
+For the catecorigal variables we interpret the results as follows: male students had 2.25 (95% CI: 1.33 -- 3.84) times greater odds
 at having high alcohol use than female students. 
 
 It is crucial to note that this **does not** mean that a student with 1 absence was 1.06 times more likely to
@@ -395,7 +400,7 @@ However, (especially step-wise) selection of regression models from large datase
 
 ***
 
-# BONUS 2: Traning vs testing error
+# BONUS 2: Training vs testing error
 
 ***
 
@@ -460,11 +465,11 @@ comparison_plot
 ***
 
 As is evident from the comparison graph, the increasing number of regressors leads to overfitting. I.e. 
-the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever smaller with
+the models become too complex and begin to describe spurious rather than true associations in the data. As a result, the training error grows ever so slightly smaller with
 the increasing number of regressors (this would be true even with random variables as predictors). 
 
 Yet, the testing error starts to grow with larger numbers of 
 regressors after reaching a minimum at around 5 regressors. This is a result of the decreasing external validity of the overfitted models -> i.e. the predictions
-of these models are not generalizable despite the very low testing errors.
+of these models are not generalizable despite the very low training errors.
 
 The "sweet spot" for the number of regressors in our data seems to be around 5 or 6 predictors/regressors.

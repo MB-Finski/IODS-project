@@ -12,6 +12,9 @@ navbar:
     - text: "Logistic regression"
       icon: fa-shipping-fast
       href: chapter3.html
+    - text: "Clustering"
+      icon: fa-th
+      href: chapter4.html
 output:
   html_document:
     theme: lumen

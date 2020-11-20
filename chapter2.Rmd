@@ -7,6 +7,11 @@ output:
 
 ---
 
+```{r, echo=FALSE, results=FALSE}
+#Let's make our reports reproducible
+set.seed(463785619)
+```
+
 ***
 
 In the following exercise we inspect an example data set for linear correlations using R. First we inspect the data set and then we select three most promising variables for analysis with multiple linear regression. 

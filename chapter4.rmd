@@ -1,0 +1,422 @@
+---
+title: "Chapter 4: Clustering and classification"
+date: "*2020-11-19*"
+output:
+  html_document:
+    toc: true
+    toc_float:
+        smooth_scroll: true
+        collapsed: false
+    toc_depth: 2
+    number_sections: true
+
+---
+
+```{r, echo=FALSE, results=FALSE}
+#Let's make our reports reproducible
+set.seed(469771822)
+```
+
+***
+
+# Description of data
+
+The data used in this excercise contains information collected by the U.S. Census Service concerning housing in the area of Boston Mass. It has been previous released to the public domain
+and has been used extensively to benchmark differen algorithms.
+
+The data first appeared in: Harrison, D. and Rubinfeld, D.L. `Hedonic prices and the demand for clean air', J. Environ. Economics & Management, vol.5, 81-102, 1978.
+
+The data was originally used to relate housing price with various predictors.
+
+***
+
+## Variable decoding
+
+For an explanation of the individual variables, please, refer to the following:
+
+***
+
+
+
+Variable name  | Explanation
+---           | -------------
+*crim*  | per capita crime rate by town/suburb.
+*zn*  | proportion of residential land zoned for lots over 25,000 sq.ft.
+*indus*  | proportion of non-retail business acres per town.
+*chas*  | Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
+*nox*  | nitrogen oxides concentration (parts per 10 million).
+*rm*  | average number of rooms per dwelling.
+*age*  | proportion of owner-occupied units built prior to 1940.
+*dis*  | weighted mean of distances to five Boston employment centres.
+*rad*  | index of accessibility to radial highways.
+*tax*  | full-value property-tax rate per \$10,000.
+*ptratio* | pupil-teacher ratio by town.
+*black* | 1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.
+*lstat* | lower status of the population (percent).
+*medv* | median value of owner-occupied homes in \$1000s.
+
+
+
+***
+
+## Interactive table
+
+```{r}
+#Read the Boston data
+library(MASS)
+data("Boston")
+
+#Draw an interactive table that can be used to view the data and its dimensions
+library(DT)
+datatable(Boston)
+```
+
+***
+
+# Graphical overview and summary
+
+***
+
+## Summary table of variables
+
+```{r}
+library(gtsummary)
+#First print out a summary table of all variables
+my_table <- tbl_summary(Boston,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ "continuous2",
+                        statistic = list(all_continuous() ~ c("{mean} ({sd})",
+                                                              "{median} ({p25}, {p75})", 
+                                                              "{min}, {max}"),
+                        all_categorical() ~ "{n} / {N} ({p}%)"))
+
+#Add some missing elements to the table and print it out
+my_table %>% bold_labels()
+
+
+```
+
+***
+
+### Comments on the data tables
+
+***
+
+From the table we can see that some of the variables (like crime, zn, and tax) have a quite skewed distributions. By exploring the interactive
+data table presented previously, we can see that tax has multiple discrete levels and some of these levels have disproportionately large numbers of
+observations (like 711). zn has observations of 0 in most cases (median = 0) although the range is 0 to 100.
+
+***
+
+## An interactive scatter plot matrix
+
+***
+
+Here's an interactive scatter plot matrix based on HTML widgets:
+
+***
+
+```{r}
+#To install scatterMatrixD3, uncomment the following two lines:
+##install.packages("devtools")
+##devtools::install_github("jcizel/scatterMatrixD3")
+
+#library(scatterMatrixD3)
+#scatterMatrix(Boston,height = 30,width = 1)
+library(pairsD3)
+pairsD3(Boston, big = TRUE,width = 1200)
+```
+
+***
+
+### Interpretation of the scatter plot matrix
+
+We can see various types of correlation in the data. There are examples of linear correlation for some pairs of variables (e.g. rm vs medv)
+and also non-linear correlations (e.g. nox vs dis).
+
+As a continuous variable crime seems to have a chi-squared type of distribution with a long tail towards higher values.
+
+Crime seems to have some potential interesting correlations: for example, somewhat curiously higher age seems to be associated with increasing crime levels.
+Other variable with a potential positive correlation with crime are nox and lstat
+dis and medv may have a negative correlation with crime.
+
+There are also various variables with "conditional" correlations with crime like zn, indus, chas, rad, tax, and ptratio.
+
+***
+
+
+# Standardize and scale the data
+
+***
+
+```{r}
+
+#Scale and standardize the data as instructed
+boston_scaled <- scale(Boston) %>% as.data.frame
+
+#Yet another way to summarize variables:
+library(psych)
+describe(boston_scaled)
+```
+
+***
+
+### How did the variables change
+
+***
+
+As can be seen from the summary of boston_scaled, all variable means were "moved" to 0 and the standard deviations
+were scaled to equal 1. In more general statistical terms the data was *standardized* with mean of 0 and sd of 1. It should be noted that standardization
+of data does not mean that data's type of distribution were altered, e.g. if the distribution of the variable was skewed before it'll still be skewed after standardization.
+
+***
+
+## Create categorized crime variable
+
+***
+
+```{r}
+#Include a convenience library
+library(dvmisc)
+
+#Create a discrete variable "crime" from quartiles of "crim"
+boston_scaled$crime <- quant_groups(x = boston_scaled$crim,
+                                    groups = 4,
+                                    cut.list=list(labels = c("low","med_low","med_high","high")))
+
+#Drop the crim variable
+boston_scaled <- boston_scaled[,!(names(boston_scaled) %in% "crim")]
+
+#Demonstrate the outcome
+str(boston_scaled)
+```
+
+***
+
+This code is more or less self explanatory (and a bit shorter than the datacamp example).
+
+***
+
+## Divide into "train" and "test" subsets
+
+***
+
+```{r}
+
+#Generate the sample indices
+#Not that you must use floor() to get the division exactly right
+#if n_rows * 0.8 is not an even number
+n_rows <- nrow(boston_scaled)
+my_training_sample <- sample(n_rows,  size = floor(n_rows * 0.8))
+
+#Training data set
+boston_train <- boston_scaled[my_training_sample, ]
+
+#Testing data set
+boston_test <- boston_scaled[-my_training_sample, ]
+```
+
+***
+
+This code chunk should be self explanatory
+
+***
+
+# Linear discriminant analysis
+
+```{r out.width="100%"}
+
+#Generate the lda fit for leves of crime with all other variables
+#as discriminators
+my_lda <- lda(crime ~ ., data = boston_train)
+
+#Print the lda fit
+my_lda
+
+```
+
+***
+
+## Interpretation of the LDA fit
+
+***
+
+The prior probabilities of groups are simply the proportion of observations in each group in the training data. 
+The reason these prior probabilities are printed is that they're necessary in calculating the so-called
+posterior probability which is used for calssification of the observations.
+
+In the group means table, we can see the means of all independent variables for each quartile of crime.
+
+One way to understand the coefficients of linear discriminants is that they are a coefficients of a linear function for calculating a "score value" (y) from all independent variables in the model.
+The coefficients for this function are calculated such that the group means of y are as far away from the mean of y for the whole data while also
+minimizing the variance of y for each individual group. Thus, the values of y will represent the best one dimensional projection of all
+the independent variables for telling the groups apart from each other.
+
+There are multiple sets of linear discriminant coefficients in the output due to the fact that there are
+multiple levels of crime. In fact, if there are k groups then the total number of linear discriminant functions will be k-1.
+This is due to the fact that k groups can have k-1 combinations of coefficients for the independent variables that optimally tell apart the groups.
+
+The proportion of trace for each linear discriminant function is the amount of (multivariate) between-group variance that the dircriminant function is able to
+explain. For example, if all the group means are on a single multidimensional line for all independent variables, the first discriminant function will be able to explain
+100% of the between-group variance. On the other hand, if all scaled group means are equidistant from the mean of the whole data, while being equally distant from all other groups, all discriminant
+functions will be able to explain an equal proportion of the between-group variance. In such a case, all discriminant functions (or dimensions) are equally important for predicting the group.
+
+***
+
+In our case the first linear discriminant function was able to explain 95.8% of the between-group variance in our data. The two remaining discriminant functions were of very little added value for telling
+the groups apart.
+
+Since our variables were previously scaled, directly comparing the scalar values of the linear discriminant function coefficients is possible. In the case of LD1, for example,
+we clearly see that rad was the variable that was the most significant discriminant for LD1.
+
+***
+
+````{r}
+#We'll use another 3rd party library for generating the biplot
+#devtools::install_github("fawda123/ggord")
+library(ggord)
+
+#Print the biplot as requested
+ggord(my_lda,boston_train$crime)
+````
+
+***
+
+## Interpretation of the biplot
+
+***
+
+Only the two most significant linear discriminant functions (LD1 and LD2) are used for this plot. LD1 and LD2 are calculated for each observation and
+the observations are plotted as a scatter plot of these two values.
+
+The arrows in the plot represent the linear discriminant coefficients for both of these functions (LD1/LD2). The longer the arrow, the greater the coefficient. I.e. we can clearly see that
+for the combined effect of LD1 and LD2 rad is clearly the most significant discriminant. Again, it should be noted that this comparison makes sense only when the independent variables are scaled.
+
+***
+
+# Validating the LDA fit
+
+***
+
+````{r}
+library(dplyr)
+
+#First save the correct crime classes in the test data separately, as instructed 
+#(although this step is completely unnecessary)
+correct_crime_classes <- boston_test$crime
+
+#Drop the correct crime class from the test data
+boston_test <- boston_test[, !(names(boston_test) %in% "crime")]
+
+#Predict crime class based on the test data and our lda fit
+crime_predictions <- predict(my_lda, newdata = boston_test)
+
+
+
+#Cross tabulate the results
+results_table <- as.data.frame(correct_crime_classes)
+results_table$predicted_class <- crime_predictions$class
+str(results_table)
+
+tbl_cross(  results_table,
+            row = correct_crime_classes,
+            col = predicted_class,
+            label = list(correct_crime_classes ~ "Correct class", predicted_class ~ "Predicted class"),
+            percent ="cell")
+
+#Calculate the proportion of correct classifications
+mean(correct_crime_classes == crime_predictions$class)
+````
+
+***
+
+### Interpretation
+
+***
+
+The LDA model was able to predict the correct crime class in 73.5% of cases in our test data. Compared to the pre-test propability of roughly 25% (in the whole data), this performance
+is very good.
+
+***
+
+# K-means clustering
+
+***
+
+## The distances of observations
+
+````{r}
+#Reload the boston dataset and scale it
+boston_scaled <- as.data.frame(scale(Boston))
+
+#Calculate the matrix for euclidean distances for all observations
+euclidean_distances <- dist(boston_scaled)
+
+#Print a summary
+summary(euclidean_distances)
+
+#Print info on the matrix
+str(euclidean_distances)
+
+````
+
+***
+
+The values in this matrix are the multivariate euclidean (all variables in boston_scaled) distances between all observations (rows) in the data table.
+The size of such matrix is 506^2. However, only (506^2 - 506) / 2 = 127765 unique values exist in the matrix as can be seen from the code output.
+
+***
+
+## The optimal number of clusters
+
+````{r}
+library(GGally)
+#Please note that I have previously set the "global" seed for this r-project
+
+#Visualize the behaviour of TWCSS vs the number of clusters
+qplot(  x = 1:10, 
+        y = sapply(1:10, function(k){kmeans(boston_scaled, k)$tot.withinss}),
+        geom = 'line',
+        ylab = "TWCSS")
+````
+
+***
+
+As can be seen from the graph, theres a steep drop for total within cluster sum of squares at k = 2 but not thereafter.
+Therefore, the data, based on the kmeans clustering has two distinct multivariate clusters. I.e. there are no discernible sub-clusters within
+the two clusters (in which case increasing the k would reduce the TWCSS dramatically).
+
+***
+
+## Visualize the clusters
+
+***
+
+
+````{r}
+#Perform k-means clustering with the optimal number of clusters
+#Save the assigned cluster into the table
+pairsD3(  x = boston_scaled,
+          group = kmeans(boston_scaled, 2)$cluster,
+          big = TRUE,
+          width = 1200)
+````
+***
+
+### Interpretation
+
+***
+
+It is important to recognize that k-means clustering is an unsupervized method for classification of data. In other words,
+we have provided no limits for the classes/clusters for the algorithm. Indeed, it's possible that the clusters assigned by
+the algorithm are not necessarily meaningful. They simply represent multivariate "concentrations" of observations.
+
+From the scatter matrix we can see that, interestingly, higher vs lower levels of crime seem to present as two discernible multivariate
+clusters in our data. Since the increased crime rates have been assigned to the red cluster almost exclusively, we can also view the rest of the scatter matrix
+as contrasting what variables are associated with higher levels of crime (red). 
+
+From the scatter matrix, we can also visualize various interactions in the data that separate the clusters like lstat vs medv; i.e.
+a combination of high lstat and low medv have been assigned to the red cluster.
+
+***
+
