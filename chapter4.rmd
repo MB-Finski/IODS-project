@@ -388,10 +388,12 @@ the two clusters (in which case increasing the k would reduce the TWCSS dramatic
 ```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 #Perform k-means clustering with the optimal number of clusters
 #Save the assigned cluster into the table
+boston_scaled$cluster <- as.factor(kmeans(boston_scaled, 2)$cluster)
 
-ggpairs(  data = boston_scaled, 
+#Print a scatter plot matrix
+ggpairs(  data = boston_scaled,
           upper = list(continuous = "points", combo = "facethist", discrete = "facetbar", na = "na"),
-          mapping = aes(col = kmeans(boston_scaled, 2)$cluster,alpha = 0.3))
+          mapping = aes(col = cluster,alpha = 0.3))
 ```
 
 ***
@@ -405,11 +407,11 @@ we have provided no limits for the classes/clusters for the algorithm. Indeed, i
 the algorithm are not necessarily meaningful. They simply represent multivariate "concentrations" of observations.
 
 From the scatter matrix we can see that, interestingly, higher vs lower levels of crime seem to present as two discernible multivariate
-clusters in our data. Since the increased crime rates have been assigned to the light blue cluster almost exclusively, we can also view the rest of the scatter matrix
-as contrasting what variables are associated with higher levels of crime (light blue). 
+clusters in our data. Since the increased crime rates have been assigned to the red cluster almost exclusively, we can also view the rest of the scatter matrix
+as contrasting what variables are associated with higher levels of crime (red). 
 
 From the scatter matrix, we can also visualize various interactions in the data that separate the clusters like lstat vs medv; i.e.
-a combination of high lstat and low medv have been assigned to the light blue cluster.
+a combination of high lstat and low medv have been assigned to the red cluster.
 
 ***
 
