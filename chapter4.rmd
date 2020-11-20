@@ -108,23 +108,16 @@ observations (like 711). zn has observations of 0 in most cases (median = 0) alt
 
 ***
 
-## An interactive scatter plot matrix
+## A scatter plot matrix
+
 
 ***
 
-Here's an interactive scatter plot matrix based on HTML widgets:
-
-***
-
-```{r}
-#To install scatterMatrixD3, uncomment the following two lines:
-##install.packages("devtools")
-##devtools::install_github("jcizel/scatterMatrixD3")
-
-#library(scatterMatrixD3)
-#scatterMatrix(Boston,height = 30,width = 1)
-library(pairsD3)
-pairsD3(Boston, big = TRUE,width = 1200)
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+library(GGally)
+#Print a scatter plot matrix
+ggpairs(  data = Boston, 
+          upper = list(continuous = "points", combo = "facethist", discrete = "facetbar", na = "na"))
 ```
 
 ***
@@ -271,14 +264,14 @@ we clearly see that rad was the variable that was the most significant discrimin
 
 ***
 
-````{r}
+```{r}
 #We'll use another 3rd party library for generating the biplot
 #devtools::install_github("fawda123/ggord")
 library(ggord)
 
 #Print the biplot as requested
 ggord(my_lda,boston_train$crime)
-````
+```
 
 ***
 
@@ -298,7 +291,7 @@ for the combined effect of LD1 and LD2 rad is clearly the most significant discr
 
 ***
 
-````{r}
+```{r}
 library(dplyr)
 
 #First save the correct crime classes in the test data separately, as instructed 
@@ -326,7 +319,7 @@ tbl_cross(  results_table,
 
 #Calculate the proportion of correct classifications
 mean(correct_crime_classes == crime_predictions$class)
-````
+```
 
 ***
 
@@ -345,7 +338,7 @@ is very good.
 
 ## The distances of observations
 
-````{r}
+```{r}
 #Reload the boston dataset and scale it
 boston_scaled <- as.data.frame(scale(Boston))
 
@@ -358,7 +351,7 @@ summary(euclidean_distances)
 #Print info on the matrix
 str(euclidean_distances)
 
-````
+```
 
 ***
 
@@ -369,8 +362,7 @@ The size of such matrix is 506^2. However, only (506^2 - 506) / 2 = 127765 uniqu
 
 ## The optimal number of clusters
 
-````{r}
-library(GGally)
+```{r}
 #Please note that I have previously set the "global" seed for this r-project
 
 #Visualize the behaviour of TWCSS vs the number of clusters
@@ -378,7 +370,7 @@ qplot(  x = 1:10,
         y = sapply(1:10, function(k){kmeans(boston_scaled, k)$tot.withinss}),
         geom = 'line',
         ylab = "TWCSS")
-````
+```
 
 ***
 
@@ -393,14 +385,15 @@ the two clusters (in which case increasing the k would reduce the TWCSS dramatic
 ***
 
 
-````{r}
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 #Perform k-means clustering with the optimal number of clusters
 #Save the assigned cluster into the table
-pairsD3(  x = boston_scaled,
-          group = kmeans(boston_scaled, 2)$cluster,
-          big = TRUE,
-          width = 1200)
-````
+
+ggpairs(  data = boston_scaled, 
+          upper = list(continuous = "points", combo = "facethist", discrete = "facetbar", na = "na"),
+          mapping = aes(col = kmeans(boston_scaled, 2)$cluster,alpha = 0.3))
+```
+
 ***
 
 ### Interpretation
