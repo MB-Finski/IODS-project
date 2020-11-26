@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+<meta name="date" content="2020-11-25" />
+
+<title>Chapter 5: Clustering and classification</title>
+
+<script src="site_libs/header-attrs-2.5/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/lumen.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/anchor-sections-1.0/anchor-sections.css" rel="stylesheet" />
+<script src="site_libs/anchor-sections-1.0/anchor-sections.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 54px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h2 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h3 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h4 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h5 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.section h6 {
+  padding-top: 59px;
+  margin-top: -59px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">My IODS project page</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+    Introduction
+  </a>
+</li>
+<li>
+  <a href="chapter2.html">
+    <span class="fa fa-chart-line"></span>
+     
+    Linear regression
+  </a>
+</li>
+<li>
+  <a href="chapter3.html">
+    <span class="fa fa-shipping-fast"></span>
+     
+    Logistic regression
+  </a>
+</li>
+<li>
+  <a href="chapter4.html">
+    <span class="fa fa-th"></span>
+     
+    Clustering
+  </a>
+</li>
+<li>
+  <a href="chapter5.html">
+    <span class="fa fa-dice-d20"></span>
+     
+    Dim reduction
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Chapter 5: Clustering and classification</h1>
+<h4 class="date"><em>2020-11-25</em></h4>
+
+</div>
+
+
+<hr />
+<p>The data, as well as, its structure, dimensions, and origins have been described previously in <a href="https://github.com/MB-Finski/IODS-project/blob/master/data/create_human.r">here</a>.</p>
+<hr />
+<div id="graphical-overview-of-data" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Graphical overview of data</h1>
+<pre class="r"><code>#Read in the data
+human &lt;- read.table(&quot;http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt&quot;, stringsAsFactors = TRUE, sep = &quot;,&quot;,header = TRUE)
+
+library(gtsummary)
+#Print out a summary table of all variables
+my_table &lt;- tbl_summary(human,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ &quot;continuous2&quot;,
+                        statistic = list(all_continuous() ~ c(&quot;{mean} ({sd})&quot;,
+                                                              &quot;{median} ({p25}, {p75})&quot;, 
+                                                              &quot;{min}, {max}&quot;)))
+
+#Add some missing elements to the table and print it out
+my_table %&gt;% bold_labels()</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#tftepjlxks .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#tftepjlxks .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#tftepjlxks .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#tftepjlxks .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#tftepjlxks .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#tftepjlxks .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#tftepjlxks .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#tftepjlxks .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#tftepjlxks .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#tftepjlxks .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#tftepjlxks .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#tftepjlxks .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#tftepjlxks .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#tftepjlxks .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#tftepjlxks .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#tftepjlxks .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#tftepjlxks .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#tftepjlxks .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#tftepjlxks .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#tftepjlxks .gt_left {
+  text-align: left;
+}
+
+#tftepjlxks .gt_center {
+  text-align: center;
+}
+
+#tftepjlxks .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#tftepjlxks .gt_font_normal {
+  font-weight: normal;
+}
+
+#tftepjlxks .gt_font_bold {
+  font-weight: bold;
+}
+
+#tftepjlxks .gt_font_italic {
+  font-style: italic;
+}
+
+#tftepjlxks .gt_super {
+  font-size: 65%;
+}
+
+#tftepjlxks .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="tftepjlxks" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N = 155</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Edu2.FM</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">0.85 (0.24)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">0.94 (0.73, 1.00)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">0.17, 1.50</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Labo.FM</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">0.71 (0.20)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">0.75 (0.60, 0.85)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">0.19, 1.04</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Edu.Exp</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">13.18 (2.84)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">13.50 (11.25, 15.20)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">5.40, 20.20</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Life.Exp</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">71.65 (8.33)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">74.20 (66.30, 77.25)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">49.00, 83.50</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">GNI</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">17,627.90 (18,543.85)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">12,040.00 (4,197.50, 24,512.00)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">581.00, 123,124.00</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Mat.Mor</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">149.08 (211.79)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">49.00 (11.50, 190.00)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">1.00, 1,100.00</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Ado.Birth</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">47.16 (41.11)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">33.60 (12.65, 71.95)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">0.60, 204.80</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Parli.F</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">20.91 (11.49)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">19.30 (12.40, 27.95)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">0.00, 57.50</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+<hr />
+<div id="interpretation-of-the-summary-table" class="section level3" number="1.0.1">
+<h3 number="1.0.1"><span class="header-section-number">1.0.1</span> Interpretation of the summary table</h3>
+<hr />
+<p>All variables are continuous and numerical. The scales and numerical variance of the variables vary wildly, which means that we absolutely should scale the data before running PCA.</p>
+<p>The data show mostly fairly symmetrical distributions based on the median and mean values. Some values like GNI, Ado.Birth and Mat.Mor are somewhat skewed, although their standard deviations, too, are quite large.</p>
+<hr />
+</div>
+<div id="correlations" class="section level2" number="1.1">
+<h2 number="1.1"><span class="header-section-number">1.1</span> Correlations</h2>
+<hr />
+<pre class="r"><code>library(GGally)
+#library(plotly)
+
+#Print a scatter plot matrix
+ggpairs(data = human)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-3-1.png" width="768" /></p>
+<pre class="r"><code>#Correlation plot
+ggcorr(data = human)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-3-2.png" width="768" /></p>
+<hr />
+<div id="interpretation-of-plots" class="section level3" number="1.1.1">
+<h3 number="1.1.1"><span class="header-section-number">1.1.1</span> Interpretation of plots</h3>
+<hr />
+<p>Visual inspection confirms our numerical observations of the distributions’ skewness for some variables. Also, quite strong correlation can be seen in the data for some variables.</p>
+<p>For example, there is considerable negative correlation for Mat.Mor vs GNI, Life.Exp, Edu.Exp, and Edu2.FM. Similar negative correlations exist for Ado.Birth.</p>
+<p>Ado.Birth and Mat.Mor, as well as, Edu.Exp and Life.Exp have a strong (&gt;0.7) positive correlation.</p>
+<p>Not all correlation seen in the data is necessarily linear: for example, GNI and Edu.Exp demonstrate a seemingly non-linear correlation. Moreover, there is heteroscedasticity in the data (for example GNI vs Edu.Exp) which would suggest that perhaps some variables in the data would benefit from log-transform before running the PCA. Alas, such considerations were not instructed for this assignment.</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="principal-component-analysis" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Principal component analysis</h1>
+<hr />
+<p>Time for some principal component analysis. First, lets run the analysis on unscaled data.</p>
+<hr />
+<div id="before-scaling" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Before scaling</h2>
+<hr />
+<pre class="r"><code>#Do PCA using SVD
+my_unscaled_pca &lt;- prcomp(human)
+
+my_unscaled_pca</code></pre>
+<pre><code>## Standard deviations (1, .., p=8):
+## [1] 1.854416e+04 1.855219e+02 2.518701e+01 1.145441e+01 3.766241e+00
+## [6] 1.565912e+00 1.912052e-01 1.591112e-01
+## 
+## Rotation (n x k) = (8 x 8):
+##                     PC1           PC2           PC3           PC4           PC5
+## Edu2.FM   -5.607472e-06  0.0006713951 -3.412027e-05 -2.736326e-04 -0.0022935252
+## Labo.FM    2.331945e-07 -0.0002819357  5.302884e-04 -4.692578e-03  0.0022190154
+## Edu.Exp   -9.562910e-05  0.0075529759  1.427664e-02 -3.313505e-02  0.1431180282
+## Life.Exp  -2.815823e-04  0.0283150248  1.294971e-02 -6.752684e-02  0.9865644425
+## GNI       -9.999832e-01 -0.0057723054 -5.156742e-04  4.932889e-05 -0.0001135863
+## Mat.Mor    5.655734e-03 -0.9916320120  1.260302e-01 -6.100534e-03  0.0266373214
+## Ado.Birth  1.233961e-03 -0.1255502723 -9.918113e-01  5.301595e-03  0.0188618600
+## Parli.F   -5.526460e-05  0.0032317269 -7.398331e-03 -9.971232e-01 -0.0716401914
+##                     PC6           PC7           PC8
+## Edu2.FM    2.180183e-02  6.998623e-01  7.139410e-01
+## Labo.FM    3.264423e-02  7.132267e-01 -7.001533e-01
+## Edu.Exp    9.882477e-01 -3.826887e-02  7.776451e-03
+## Life.Exp  -1.453515e-01  5.380452e-03  2.281723e-03
+## GNI       -2.711698e-05 -8.075191e-07 -1.176762e-06
+## Mat.Mor    1.695203e-03  1.355518e-04  8.371934e-04
+## Ado.Birth  1.273198e-02 -8.641234e-05 -1.707885e-04
+## Parli.F   -2.309896e-02 -2.642548e-03  2.680113e-03</code></pre>
+<pre class="r"><code>summary(my_unscaled_pca)</code></pre>
+<pre><code>## Importance of components:
+##                              PC1      PC2   PC3   PC4   PC5   PC6    PC7    PC8
+## Standard deviation     1.854e+04 185.5219 25.19 11.45 3.766 1.566 0.1912 0.1591
+## Proportion of Variance 9.999e-01   0.0001  0.00  0.00 0.000 0.000 0.0000 0.0000
+## Cumulative Proportion  9.999e-01   1.0000  1.00  1.00 1.000 1.000 1.0000 1.0000</code></pre>
+<pre class="r"><code>#Print calculate the PC labels with the percentages of variance for the biplots
+variance_precentage &lt;- round(100*summary(my_unscaled_pca)$importance[2, ], digits = 3)
+variance_precentage &lt;- paste0(names(variance_precentage), &quot; (&quot;, variance_precentage, &quot; %)&quot;)
+
+#Print the biplot as requested
+biplot(my_unscaled_pca, cex = c(0.6, 1), col = c(&quot;grey40&quot;, &quot;red&quot;), xlab = variance_precentage[1], ylab = variance_precentage[2])
+
+#What on earth is meant by &quot;captions ... in your plots&quot; in the instructions
+#is lost on me but here&#39;s how you can add (confusing) text to your plot:
+text(x=-170000,y=-28000, labels = paste0(&quot;Caption: GNI has by far the greates\n&quot;,
+                                  &quot;contribution to the unscaled variance in the\n&quot;,
+                                  &quot;data. Indeed, PC1 (aligned with GNI) explains\n&quot;,
+                                  &quot;99.99% of the variance in the data.&quot;), cex = 0.75,col=&quot;blue&quot;)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-4-1.png" width="768" /></p>
+<hr />
+</div>
+<div id="after-scaling" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> After scaling</h2>
+<hr />
+<pre class="r"><code>#Scale the data
+human_scaled &lt;- scale(human)
+
+#Do PCA using SVD
+my_scaled_pca &lt;- prcomp(human_scaled)
+
+my_scaled_pca</code></pre>
+<pre><code>## Standard deviations (1, .., p=8):
+## [1] 2.0708380 1.1397204 0.8750485 0.7788630 0.6619563 0.5363061 0.4589994
+## [8] 0.3222406
+## 
+## Rotation (n x k) = (8 x 8):
+##                   PC1         PC2         PC3         PC4        PC5
+## Edu2.FM   -0.35664370  0.03796058 -0.24223089  0.62678110 -0.5983585
+## Labo.FM    0.05457785  0.72432726 -0.58428770  0.06199424  0.2625067
+## Edu.Exp   -0.42766720  0.13940571 -0.07340270 -0.07020294  0.1659678
+## Life.Exp  -0.44372240 -0.02530473  0.10991305 -0.05834819  0.1628935
+## GNI       -0.35048295  0.05060876 -0.20168779 -0.72727675 -0.4950306
+## Mat.Mor    0.43697098  0.14508727 -0.12522539 -0.25170614 -0.1800657
+## Ado.Birth  0.41126010  0.07708468  0.01968243  0.04986763 -0.4672068
+## Parli.F   -0.08438558  0.65136866  0.72506309  0.01396293 -0.1523699
+##                   PC6         PC7         PC8
+## Edu2.FM    0.17713316  0.05773644  0.16459453
+## Labo.FM   -0.03500707 -0.22729927 -0.07304568
+## Edu.Exp   -0.38606919  0.77962966 -0.05415984
+## Life.Exp  -0.42242796 -0.43406432  0.62737008
+## GNI        0.11120305 -0.13711838 -0.16961173
+## Mat.Mor    0.17370039  0.35380306  0.72193946
+## Ado.Birth -0.76056557 -0.06897064 -0.14335186
+## Parli.F    0.13749772  0.00568387 -0.02306476</code></pre>
+<pre class="r"><code>summary(my_scaled_pca)</code></pre>
+<pre><code>## Importance of components:
+##                           PC1    PC2     PC3     PC4     PC5     PC6     PC7
+## Standard deviation     2.0708 1.1397 0.87505 0.77886 0.66196 0.53631 0.45900
+## Proportion of Variance 0.5361 0.1624 0.09571 0.07583 0.05477 0.03595 0.02634
+## Cumulative Proportion  0.5361 0.6984 0.79413 0.86996 0.92473 0.96069 0.98702
+##                            PC8
+## Standard deviation     0.32224
+## Proportion of Variance 0.01298
+## Cumulative Proportion  1.00000</code></pre>
+<pre class="r"><code>#Print calculate the PC labels with the percentages of variance for the biplots
+variance_precentage &lt;- round(100*summary(my_scaled_pca)$importance[2, ], digits = 3)
+variance_precentage &lt;- paste0(names(variance_precentage), &quot; (&quot;, variance_precentage, &quot; %)&quot;)
+
+#Print the biplot as requested
+biplot(my_scaled_pca, cex = c(0.6, 1), col = c(&quot;grey40&quot;, &quot;red&quot;), xlab = variance_precentage[1], ylab = variance_precentage[2])
+text(x=-5,y=13, labels = paste0(&quot;Caption: After scaling, PC1 explains only\n&quot;,
+                                  &quot;53.6% of variance in the data. Variables,\n&quot;,
+                                  &quot;whose arrows align with each other, are also correlated.\n&quot;,
+                                  &quot;Similarly, aligning with either PC1 or PC2 axes\n&quot;,
+                                  &quot;signifies the variable&#39;s contribution to said component.\n&quot;), cex = 0.75,col=&quot;blue&quot;)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-5-1.png" width="768" /></p>
+<hr />
+</div>
+<div id="interpretation-of-pca-results" class="section level2" number="2.3">
+<h2 number="2.3"><span class="header-section-number">2.3</span> Interpretation of PCA results</h2>
+<hr />
+<div id="general-considerations-of-pca" class="section level3" number="2.3.1">
+<h3 number="2.3.1"><span class="header-section-number">2.3.1</span> General considerations of PCA</h3>
+<p>In laymans terms, principal componen analysis (PCA) is a method whereby a maximum of the variance in multivariate data is distilled to as few degrees of freedom (or principal components) as possible using a linear function. In visual terms, a principal component can be described as a multivariate axis through the data. All observations are then projected on to this axis. Each principal component is derived by aligning this “axis” (or principal component) with the dimension of greatest multivariate variance in the data. This variance (or dimension) is then “removed” from the data for the calculation of subsequent principal components (i.e. the principal components are at a right angle to each other). Thus, after the first principal component, each subsequent principal component is able to describe only as much or less variance than the previous component. In the theoretical case of <em>perfectly</em> multivariate normal data, each principal component will be equally important for describing the data. The number of principal components is always as great as the degrees of freedom (=number of variables) in the data – otherwise the PCA would not be able to describe all variance in the data.</p>
+</div>
+<div id="sginificance-of-scalingnormalizing-variables" class="section level3" number="2.3.2">
+<h3 number="2.3.2"><span class="header-section-number">2.3.2</span> Sginificance of scaling/normalizing variables</h3>
+<p>Since variance can differ wildly for different variables, scaling the data is often necessary make better sense of the results. For example, if one variable in the data has much higher variance compared to other variables the first principal component will always align with this variable. This result may be nonsensical, especially if this variable simply has a larger scale or higher measurement noise which explains the high variance. However, if the intention is to simply identify the components (or axis) with the highest variance in the data, then, scaling is counter intuitive.</p>
+<p>It should be noted that scaling the data essentially assigns “equal importance” for each variable in the PCA. Depending on the above considerations this may or may not make sense in your particular use case.</p>
+</div>
+</div>
+</div>
+<div id="pca-non-scaled-vs-scaled" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> PCA: Non-scaled vs scaled</h1>
+<hr />
+<p>In the case of our example data, the variance of GNI is numerically far greater than for any other variable in the data. Thus, the before scaling PC1 almost entirely aligns with GNI and, in this analysis, explains 99.99% of variance in the data. This results makes no sense in our case since the variables are measured at completely different scales.</p>
+<p>After scaling, GNI has lost its disproportinately large significance, as can clearly be seen from the biplot.</p>
+<hr />
+</div>
+<div id="interpretation-pc1-and-pc2" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Interpretation: PC1 and PC2</h1>
+<hr />
+<p>As discussed above PC1 in the latter biplot is the multivariate dimeansion/axis in the scaled data where most of the data’s variance (53.6% to be exact) aligns. Thus, most of the variance in our data with 8 degrees of freedom can be described with only a single dimension. For PC1, the most significant variable was Life.Exp with Mat.Mor a close second. We can also assess correlations (since we scaled the data) in the data by looking at the sign and magnitude of the PC coefficients (i.e. the arrows aligning in the biplot). Opposite facing arrows imply negative correlations.</p>
+<p>The second principal component is calculated after the variance described by PC1 is “substracted” from the data. Thus, PC2 is able to predict less of the multivariate variance in the data (16.2% to be exact) Also, as in the graph, PC2 is mathematically at a right angle to PC1 and thus they are wholly uncorrelated. The interpretation of the variables significance for PC2 is similar to PC1.</p>
+<hr />
+<div id="extracurricular-activities" class="section level2" number="4.1">
+<h2 number="4.1"><span class="header-section-number">4.1</span> Extracurricular activities</h2>
+<div id="when-to-scale-or-not-to-scale-the-data-before-pca" class="section level3" number="4.1.1">
+<h3 number="4.1.1"><span class="header-section-number">4.1.1</span> When to scale or not to scale the data before PCA</h3>
+<hr />
+<p>To clarify the significance of scaling the data before PCA, let’s do a practical thought exercise:</p>
+<p>Let’s say that we have a database face images and we wish to know which features in the image optimally tell apart the faces from each individual so as to make predictions of identity on any subsequent face images. For simplicity’s sake, let’s assume we can measure only three features from the images: X1, X2, and X3. These variables may or may not have different variance and/or be correlated. Additionally they may have different repeatability.</p>
+<p>Now, let’s further assume that computing these variables for a single face image is time consuming and, even more importantly, comparing them through our vast database of face images is extremely resource intensive. Thus, we wish to find only a single dimensional combination/reduction of these variables that can best be used to distinguish one face from another. For this purpose of dimensionality reduction we wish to use PCA.</p>
+<p><strong>The question is: should we or should we not scale the variables X1, X2, and X3?</strong></p>
+<p>The correct answer is: it depends.</p>
+<p>For example, let’s assume you know from previous research that these features are of roughly equal importance to telling apart the In such a case, standardizing/scaling the data makes perfect sense.</p>
+<p>As an opposite example, let’s assume that you know the uncertainty of measuring X1, X2, and X3 from double images of same individuals. Now if you have adjusted X1, X2, and X3 according to this uncertainty (for example, by dividing with intra-individual standard deviation of each variable) before running PCA, you should absolutely not scale these variables since you’re interested in catching the maximum amount of variance in the data with a single linear variable.</p>
+<hr />
+</div>
+<div id="a-simulated-example-of-the-face-recognition-dilemma" class="section level3" number="4.1.2">
+<h3 number="4.1.2"><span class="header-section-number">4.1.2</span> A simulated example of the face recognition dilemma</h3>
+<hr />
+<p>Let’s do an example analysis of the above face recognition dilemma with simulated data:</p>
+<hr />
+<pre class="r"><code>library(MASS)
+library(psych)
+
+#First let&#39;s create a table with two highly correlated variables and 
+#one completely non-correlated variable with significantly higher variance
+
+#Covariance matrix of simulated data:
+#    X1: X2: X3:
+#X1: 1   1   0
+#X2: 1   1   0
+#X3: 0   0   16
+#
+# X1 and X2 will show sd of 1 and are have positive covariance
+# X3 has sd of 4 and shows no covariance with either X1 or X2
+#
+# Matrix values as vector: c(1,1,0,1,1,0,0,0,10)
+corr_matrix &lt;- matrix(c(1, 1, 0, 1, 1, 0, 0, 0, 10), nrow = 3, ncol = 3)
+
+#Means of zero for all variables
+var_means &lt;- c(0, 0, 0)
+
+#Generate the multivariate normal data table:
+test_data &lt;- mvrnorm(n = 10000, mu = var_means, Sigma = corr_matrix, empirical = TRUE)
+
+#Describe the simulated data:
+describe(test_data)</code></pre>
+<pre><code>##    vars     n mean   sd median trimmed  mad    min   max range  skew kurtosis
+## X1    1 10000    0 1.00      0    0.00 1.01  -3.62  3.86  7.47 -0.01    -0.05
+## X2    2 10000    0 1.00      0    0.00 1.01  -3.62  3.86  7.47 -0.01    -0.05
+## X3    3 10000    0 3.16      0   -0.01 3.19 -11.87 11.95 23.82  0.02    -0.05
+##      se
+## X1 0.01
+## X2 0.01
+## X3 0.03</code></pre>
+<pre class="r"><code>#Do the pca on the non-scaled data
+my_simulated_pca &lt;- prcomp(test_data)
+
+#Print out 
+my_simulated_pca</code></pre>
+<pre><code>## Standard deviations (1, .., p=3):
+## [1] 3.162278e+00 1.414214e+00 3.332001e-08
+## 
+## Rotation (n x k) = (3 x 3):
+##                PC1           PC2           PC3
+## [1,]  0.000000e+00 -7.071068e-01 -7.071068e-01
+## [2,] -2.954859e-17 -7.071068e-01  7.071068e-01
+## [3,] -1.000000e+00  2.089401e-17 -2.089401e-17</code></pre>
+<pre class="r"><code>summary(my_simulated_pca)</code></pre>
+<pre><code>## Importance of components:
+##                           PC1    PC2       PC3
+## Standard deviation     3.1623 1.4142 3.332e-08
+## Proportion of Variance 0.8333 0.1667 0.000e+00
+## Cumulative Proportion  0.8333 1.0000 1.000e+00</code></pre>
+<pre class="r"><code>#Now do the pca after scaling data:
+my_simulated_pca &lt;- prcomp(scale(test_data))
+
+#Print out 
+my_simulated_pca</code></pre>
+<pre><code>## Standard deviations (1, .., p=3):
+## [1] 1.414214e+00 1.000000e+00 3.332001e-08
+## 
+## Rotation (n x k) = (3 x 3):
+##                PC1           PC2           PC3
+## [1,] -7.071068e-01 -1.942890e-16  7.071068e-01
+## [2,] -7.071068e-01 -2.631457e-16 -7.071068e-01
+## [3,]  3.234552e-16 -1.000000e+00  4.589946e-17</code></pre>
+<pre class="r"><code>summary(my_simulated_pca)</code></pre>
+<pre><code>## Importance of components:
+##                           PC1    PC2       PC3
+## Standard deviation     1.4142 1.0000 3.332e-08
+## Proportion of Variance 0.6667 0.3333 0.000e+00
+## Cumulative Proportion  0.6667 1.0000 1.000e+00</code></pre>
+<hr />
+</div>
+<div id="interpretation-of-the-example-analysis" class="section level3" number="4.1.3">
+<h3 number="4.1.3"><span class="header-section-number">4.1.3</span> Interpretation of the example analysis</h3>
+<hr />
+<p>As can be seen from the example analysis, the results are completely different before and after scaling. Before scaling, X3 alone explains the most variance in the data. However, if each variable is assigned equal importance (i.e. variables are scaled before PCA), the combination of X1 and X2 (PC1 coefficients of -0.7 for both) is the best combination of the available variables for telling the “individuals” apart (= maximal variance on a single dimension).</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="multiple-correspondence" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> Multiple correspondence</h1>
+<hr />
+<div id="exploration-of-dataset" class="section level2" number="5.1">
+<h2 number="5.1"><span class="header-section-number">5.1</span> Exploration of dataset</h2>
+<hr />
+<pre class="r"><code>#Let&#39;s make our reports reproducible
+library(FactoMineR)
+
+#Load the dataset
+data(tea)
+
+#Explore the structure and dimensions.
+str(tea)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    300 obs. of  36 variables:
+##  $ breakfast       : Factor w/ 2 levels &quot;breakfast&quot;,&quot;Not.breakfast&quot;: 1 1 2 2 1 2 1 2 1 1 ...
+##  $ tea.time        : Factor w/ 2 levels &quot;Not.tea time&quot;,..: 1 1 2 1 1 1 2 2 2 1 ...
+##  $ evening         : Factor w/ 2 levels &quot;evening&quot;,&quot;Not.evening&quot;: 2 2 1 2 1 2 2 1 2 1 ...
+##  $ lunch           : Factor w/ 2 levels &quot;lunch&quot;,&quot;Not.lunch&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ dinner          : Factor w/ 2 levels &quot;dinner&quot;,&quot;Not.dinner&quot;: 2 2 1 1 2 1 2 2 2 2 ...
+##  $ always          : Factor w/ 2 levels &quot;always&quot;,&quot;Not.always&quot;: 2 2 2 2 1 2 2 2 2 2 ...
+##  $ home            : Factor w/ 2 levels &quot;home&quot;,&quot;Not.home&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ work            : Factor w/ 2 levels &quot;Not.work&quot;,&quot;work&quot;: 1 1 2 1 1 1 1 1 1 1 ...
+##  $ tearoom         : Factor w/ 2 levels &quot;Not.tearoom&quot;,..: 1 1 1 1 1 1 1 1 1 2 ...
+##  $ friends         : Factor w/ 2 levels &quot;friends&quot;,&quot;Not.friends&quot;: 2 2 1 2 2 2 1 2 2 2 ...
+##  $ resto           : Factor w/ 2 levels &quot;Not.resto&quot;,&quot;resto&quot;: 1 1 2 1 1 1 1 1 1 1 ...
+##  $ pub             : Factor w/ 2 levels &quot;Not.pub&quot;,&quot;pub&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Tea             : Factor w/ 3 levels &quot;black&quot;,&quot;Earl Grey&quot;,..: 1 1 2 2 2 2 2 1 2 1 ...
+##  $ How             : Factor w/ 4 levels &quot;alone&quot;,&quot;lemon&quot;,..: 1 3 1 1 1 1 1 3 3 1 ...
+##  $ sugar           : Factor w/ 2 levels &quot;No.sugar&quot;,&quot;sugar&quot;: 2 1 1 2 1 1 1 1 1 1 ...
+##  $ how             : Factor w/ 3 levels &quot;tea bag&quot;,&quot;tea bag+unpackaged&quot;,..: 1 1 1 1 1 1 1 1 2 2 ...
+##  $ where           : Factor w/ 3 levels &quot;chain store&quot;,..: 1 1 1 1 1 1 1 1 2 2 ...
+##  $ price           : Factor w/ 6 levels &quot;p_branded&quot;,&quot;p_cheap&quot;,..: 4 6 6 6 6 3 6 6 5 5 ...
+##  $ age             : int  39 45 47 23 48 21 37 36 40 37 ...
+##  $ sex             : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 2 1 1 2 2 2 2 1 2 2 ...
+##  $ SPC             : Factor w/ 7 levels &quot;employee&quot;,&quot;middle&quot;,..: 2 2 4 6 1 6 5 2 5 5 ...
+##  $ Sport           : Factor w/ 2 levels &quot;Not.sportsman&quot;,..: 2 2 2 1 2 2 2 2 2 1 ...
+##  $ age_Q           : Factor w/ 5 levels &quot;15-24&quot;,&quot;25-34&quot;,..: 3 4 4 1 4 1 3 3 3 3 ...
+##  $ frequency       : Factor w/ 4 levels &quot;1/day&quot;,&quot;1 to 2/week&quot;,..: 1 1 3 1 3 1 4 2 3 3 ...
+##  $ escape.exoticism: Factor w/ 2 levels &quot;escape-exoticism&quot;,..: 2 1 2 1 1 2 2 2 2 2 ...
+##  $ spirituality    : Factor w/ 2 levels &quot;Not.spirituality&quot;,..: 1 1 1 2 2 1 1 1 1 1 ...
+##  $ healthy         : Factor w/ 2 levels &quot;healthy&quot;,&quot;Not.healthy&quot;: 1 1 1 1 2 1 1 1 2 1 ...
+##  $ diuretic        : Factor w/ 2 levels &quot;diuretic&quot;,&quot;Not.diuretic&quot;: 2 1 1 2 1 2 2 2 2 1 ...
+##  $ friendliness    : Factor w/ 2 levels &quot;friendliness&quot;,..: 2 2 1 2 1 2 2 1 2 1 ...
+##  $ iron.absorption : Factor w/ 2 levels &quot;iron absorption&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ feminine        : Factor w/ 2 levels &quot;feminine&quot;,&quot;Not.feminine&quot;: 2 2 2 2 2 2 2 1 2 2 ...
+##  $ sophisticated   : Factor w/ 2 levels &quot;Not.sophisticated&quot;,..: 1 1 1 2 1 1 1 2 2 1 ...
+##  $ slimming        : Factor w/ 2 levels &quot;No.slimming&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ exciting        : Factor w/ 2 levels &quot;exciting&quot;,&quot;No.exciting&quot;: 2 1 2 2 2 2 2 2 2 2 ...
+##  $ relaxing        : Factor w/ 2 levels &quot;No.relaxing&quot;,..: 1 1 2 2 2 2 2 2 2 2 ...
+##  $ effect.on.health: Factor w/ 2 levels &quot;effect on health&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...</code></pre>
+<div id="visual-exploration" class="section level3" number="5.1.1">
+<h3 number="5.1.1"><span class="header-section-number">5.1.1</span> Visual Exploration</h3>
+<hr />
+<p>Frankly, meaningful visual exploration of the dataset with 35 categorical variables, most of which have only 2 levels, is challenging (and a bit too much for a contingency table). Infact, MCA can be used to perhaps simplify this issue but we’ll get back to this later…</p>
+<p>In the meanwhile, a table instead of a plot, IMHO, is the most meaningful option for displaying the data.</p>
+<hr />
+<pre class="r"><code>#Print out a table of all variables
+my_table &lt;- tbl_summary(tea,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ &quot;continuous2&quot;,
+                        statistic = list(all_continuous() ~ c(&quot;{mean} ({sd})&quot;,
+                                                              &quot;{median} ({p25}, {p75})&quot;, 
+                                                              &quot;{min}, {max}&quot;),
+                        all_categorical() ~ &quot;{n} / {N} ({p}%)&quot;))
+
+#Add some missing elements to the table and print it out
+my_table %&gt;% bold_labels()</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#dlrqggzfmm .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#dlrqggzfmm .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#dlrqggzfmm .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#dlrqggzfmm .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#dlrqggzfmm .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#dlrqggzfmm .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#dlrqggzfmm .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#dlrqggzfmm .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#dlrqggzfmm .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#dlrqggzfmm .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#dlrqggzfmm .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#dlrqggzfmm .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#dlrqggzfmm .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#dlrqggzfmm .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#dlrqggzfmm .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#dlrqggzfmm .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#dlrqggzfmm .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#dlrqggzfmm .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#dlrqggzfmm .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#dlrqggzfmm .gt_left {
+  text-align: left;
+}
+
+#dlrqggzfmm .gt_center {
+  text-align: center;
+}
+
+#dlrqggzfmm .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#dlrqggzfmm .gt_font_normal {
+  font-weight: normal;
+}
+
+#dlrqggzfmm .gt_font_bold {
+  font-weight: bold;
+}
+
+#dlrqggzfmm .gt_font_italic {
+  font-style: italic;
+}
+
+#dlrqggzfmm .gt_super {
+  font-size: 65%;
+}
+
+#dlrqggzfmm .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="dlrqggzfmm" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>N = 300</strong></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">breakfast</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">breakfast</td>
+      <td class="gt_row gt_center">144 / 300 (48%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.breakfast</td>
+      <td class="gt_row gt_center">156 / 300 (52%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">tea.time</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.tea time</td>
+      <td class="gt_row gt_center">131 / 300 (44%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">tea time</td>
+      <td class="gt_row gt_center">169 / 300 (56%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">evening</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">evening</td>
+      <td class="gt_row gt_center">103 / 300 (34%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.evening</td>
+      <td class="gt_row gt_center">197 / 300 (66%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">lunch</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">lunch</td>
+      <td class="gt_row gt_center">44 / 300 (15%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.lunch</td>
+      <td class="gt_row gt_center">256 / 300 (85%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">dinner</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">dinner</td>
+      <td class="gt_row gt_center">21 / 300 (7.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.dinner</td>
+      <td class="gt_row gt_center">279 / 300 (93%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">always</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">always</td>
+      <td class="gt_row gt_center">103 / 300 (34%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.always</td>
+      <td class="gt_row gt_center">197 / 300 (66%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">home</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">home</td>
+      <td class="gt_row gt_center">291 / 300 (97%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.home</td>
+      <td class="gt_row gt_center">9 / 300 (3.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">work</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.work</td>
+      <td class="gt_row gt_center">213 / 300 (71%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">work</td>
+      <td class="gt_row gt_center">87 / 300 (29%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">tearoom</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.tearoom</td>
+      <td class="gt_row gt_center">242 / 300 (81%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">tearoom</td>
+      <td class="gt_row gt_center">58 / 300 (19%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">friends</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">friends</td>
+      <td class="gt_row gt_center">196 / 300 (65%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.friends</td>
+      <td class="gt_row gt_center">104 / 300 (35%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">resto</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.resto</td>
+      <td class="gt_row gt_center">221 / 300 (74%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">resto</td>
+      <td class="gt_row gt_center">79 / 300 (26%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">pub</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.pub</td>
+      <td class="gt_row gt_center">237 / 300 (79%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">pub</td>
+      <td class="gt_row gt_center">63 / 300 (21%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Tea</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">black</td>
+      <td class="gt_row gt_center">74 / 300 (25%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Earl Grey</td>
+      <td class="gt_row gt_center">193 / 300 (64%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">green</td>
+      <td class="gt_row gt_center">33 / 300 (11%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">How</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">alone</td>
+      <td class="gt_row gt_center">195 / 300 (65%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">lemon</td>
+      <td class="gt_row gt_center">33 / 300 (11%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">milk</td>
+      <td class="gt_row gt_center">63 / 300 (21%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other</td>
+      <td class="gt_row gt_center">9 / 300 (3.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sugar</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">No.sugar</td>
+      <td class="gt_row gt_center">155 / 300 (52%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">sugar</td>
+      <td class="gt_row gt_center">145 / 300 (48%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">how</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">tea bag</td>
+      <td class="gt_row gt_center">170 / 300 (57%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">tea bag+unpackaged</td>
+      <td class="gt_row gt_center">94 / 300 (31%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">unpackaged</td>
+      <td class="gt_row gt_center">36 / 300 (12%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">where</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">chain store</td>
+      <td class="gt_row gt_center">192 / 300 (64%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">chain store+tea shop</td>
+      <td class="gt_row gt_center">78 / 300 (26%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">tea shop</td>
+      <td class="gt_row gt_center">30 / 300 (10%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">price</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_branded</td>
+      <td class="gt_row gt_center">95 / 300 (32%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_cheap</td>
+      <td class="gt_row gt_center">7 / 300 (2.3%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_private label</td>
+      <td class="gt_row gt_center">21 / 300 (7.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_unknown</td>
+      <td class="gt_row gt_center">12 / 300 (4.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_upscale</td>
+      <td class="gt_row gt_center">53 / 300 (18%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">p_variable</td>
+      <td class="gt_row gt_center">112 / 300 (37%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">age</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Mean (SD)</td>
+      <td class="gt_row gt_center">37.05 (16.87)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Median (IQR)</td>
+      <td class="gt_row gt_center">32.00 (23.00, 48.00)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Range</td>
+      <td class="gt_row gt_center">15.00, 90.00</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sex</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">F</td>
+      <td class="gt_row gt_center">178 / 300 (59%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">M</td>
+      <td class="gt_row gt_center">122 / 300 (41%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">SPC</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">employee</td>
+      <td class="gt_row gt_center">59 / 300 (20%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">middle</td>
+      <td class="gt_row gt_center">40 / 300 (13%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">non-worker</td>
+      <td class="gt_row gt_center">64 / 300 (21%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">other worker</td>
+      <td class="gt_row gt_center">20 / 300 (6.7%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">senior</td>
+      <td class="gt_row gt_center">35 / 300 (12%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">student</td>
+      <td class="gt_row gt_center">70 / 300 (23%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">workman</td>
+      <td class="gt_row gt_center">12 / 300 (4.0%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Sport</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.sportsman</td>
+      <td class="gt_row gt_center">121 / 300 (40%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">sportsman</td>
+      <td class="gt_row gt_center">179 / 300 (60%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">age_Q</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">15-24</td>
+      <td class="gt_row gt_center">92 / 300 (31%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">25-34</td>
+      <td class="gt_row gt_center">69 / 300 (23%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">35-44</td>
+      <td class="gt_row gt_center">40 / 300 (13%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">45-59</td>
+      <td class="gt_row gt_center">61 / 300 (20%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">+60</td>
+      <td class="gt_row gt_center">38 / 300 (13%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">frequency</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1/day</td>
+      <td class="gt_row gt_center">95 / 300 (32%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">1 to 2/week</td>
+      <td class="gt_row gt_center">44 / 300 (15%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">+2/day</td>
+      <td class="gt_row gt_center">127 / 300 (42%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">3 to 6/week</td>
+      <td class="gt_row gt_center">34 / 300 (11%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">escape.exoticism</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">escape-exoticism</td>
+      <td class="gt_row gt_center">142 / 300 (47%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.escape-exoticism</td>
+      <td class="gt_row gt_center">158 / 300 (53%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">spirituality</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.spirituality</td>
+      <td class="gt_row gt_center">206 / 300 (69%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">spirituality</td>
+      <td class="gt_row gt_center">94 / 300 (31%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">healthy</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">healthy</td>
+      <td class="gt_row gt_center">210 / 300 (70%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.healthy</td>
+      <td class="gt_row gt_center">90 / 300 (30%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">diuretic</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">diuretic</td>
+      <td class="gt_row gt_center">174 / 300 (58%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.diuretic</td>
+      <td class="gt_row gt_center">126 / 300 (42%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">friendliness</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">friendliness</td>
+      <td class="gt_row gt_center">242 / 300 (81%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.friendliness</td>
+      <td class="gt_row gt_center">58 / 300 (19%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">iron.absorption</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">iron absorption</td>
+      <td class="gt_row gt_center">31 / 300 (10%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.iron absorption</td>
+      <td class="gt_row gt_center">269 / 300 (90%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">feminine</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">feminine</td>
+      <td class="gt_row gt_center">129 / 300 (43%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.feminine</td>
+      <td class="gt_row gt_center">171 / 300 (57%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">sophisticated</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Not.sophisticated</td>
+      <td class="gt_row gt_center">85 / 300 (28%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">sophisticated</td>
+      <td class="gt_row gt_center">215 / 300 (72%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">slimming</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">No.slimming</td>
+      <td class="gt_row gt_center">255 / 300 (85%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">slimming</td>
+      <td class="gt_row gt_center">45 / 300 (15%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">exciting</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">exciting</td>
+      <td class="gt_row gt_center">116 / 300 (39%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">No.exciting</td>
+      <td class="gt_row gt_center">184 / 300 (61%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">relaxing</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">No.relaxing</td>
+      <td class="gt_row gt_center">113 / 300 (38%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">relaxing</td>
+      <td class="gt_row gt_center">187 / 300 (62%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">effect.on.health</td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">effect on health</td>
+      <td class="gt_row gt_center">66 / 300 (22%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">No.effect on health</td>
+      <td class="gt_row gt_center">234 / 300 (78%)</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+<hr />
+<p>Nothing much to interpret here. Frequencies and proportions are printed as requested.</p>
+<hr />
+</div>
+</div>
+<div id="running-the-mca-analysis" class="section level2" number="5.2">
+<h2 number="5.2"><span class="header-section-number">5.2</span> Running the MCA analysis</h2>
+<hr />
+<div id="forming-a-research-question" class="section level3" number="5.2.1">
+<h3 number="5.2.1"><span class="header-section-number">5.2.1</span> Forming a research question</h3>
+<hr />
+<p>So what are we running a multiple correspondence analysis for? MCA can be viewed as analogous to PCA; however, it is a generalization for catogorical variables. Continuous variables can be projected onto the dimensions (analogous to PCA principal components) created by the MCA. Thus, even continues variables can be contrasted with different patterns of categorical variables.</p>
+<p>As such, the use cases of MCA and, also, analogous to use cases of PCA; reducing dimensions in a multivariate categorical data to as few significant degrees of freedom (or in this case patterns in the categorical variables) as possible. Similar to the variable coefficients of principal components in PCA we can use the DMA to also study associations with variable categories.</p>
+<p>For forming a valid research question, let’s say we’re working at a tea shop and we wish to enhance our understanding of our clientele. More specifically we wish to indentify possible patterns in habits of tea consumption.</p>
+<p>To identify possible patterns in tea consumption habits we include the first 18 variables (questions related to tea consumption) and demographic factors: sex, SPC, and age_q into our MCA analysis.</p>
+<hr />
+<pre class="r"><code>#Generate drop unnecessary variables:
+tea2 &lt;- tea[c(1:18, 20:21, 23)]
+
+#Let&#39;s do the MCA analysis. 
+my_mca &lt;- MCA(tea2, graph = FALSE)
+
+#Let&#39;s print a summary of our MCA
+summary(my_mca)</code></pre>
+<pre><code>## 
+## Call:
+## MCA(X = tea2, graph = FALSE) 
+## 
+## 
+## Eigenvalues
+##                        Dim.1   Dim.2   Dim.3   Dim.4   Dim.5   Dim.6   Dim.7
+## Variance               0.133   0.128   0.101   0.091   0.079   0.070   0.068
+## % of var.              7.323   7.074   5.596   5.037   4.380   3.859   3.736
+## Cumulative % of var.   7.323  14.397  19.993  25.031  29.411  33.269  37.005
+##                        Dim.8   Dim.9  Dim.10  Dim.11  Dim.12  Dim.13  Dim.14
+## Variance               0.064   0.061   0.061   0.057   0.055   0.054   0.052
+## % of var.              3.544   3.391   3.348   3.152   3.036   2.987   2.871
+## Cumulative % of var.  40.549  43.940  47.288  50.441  53.477  56.464  59.335
+##                       Dim.15  Dim.16  Dim.17  Dim.18  Dim.19  Dim.20  Dim.21
+## Variance               0.050   0.049   0.045   0.044   0.044   0.043   0.040
+## % of var.              2.760   2.719   2.488   2.445   2.409   2.370   2.198
+## Cumulative % of var.  62.095  64.814  67.302  69.746  72.156  74.526  76.724
+##                       Dim.22  Dim.23  Dim.24  Dim.25  Dim.26  Dim.27  Dim.28
+## Variance               0.037   0.035   0.034   0.033   0.032   0.029   0.028
+## % of var.              2.053   1.937   1.864   1.815   1.766   1.592   1.538
+## Cumulative % of var.  78.777  80.714  82.577  84.393  86.158  87.750  89.288
+##                       Dim.29  Dim.30  Dim.31  Dim.32  Dim.33  Dim.34  Dim.35
+## Variance               0.026   0.025   0.025   0.022   0.020   0.020   0.018
+## % of var.              1.461   1.405   1.356   1.196   1.113   1.099   0.969
+## Cumulative % of var.  90.749  92.154  93.510  94.706  95.818  96.918  97.887
+##                       Dim.36  Dim.37  Dim.38
+## Variance               0.014   0.013   0.011
+## % of var.              0.793   0.707   0.613
+## Cumulative % of var.  98.680  99.387 100.000
+## 
+## Individuals (the 10 first)
+##                  Dim.1    ctr   cos2    Dim.2    ctr   cos2    Dim.3    ctr
+## 1             | -0.478  0.574  0.093 |  0.233  0.141  0.022 |  0.024  0.002
+## 2             | -0.263  0.174  0.051 |  0.290  0.219  0.062 | -0.313  0.323
+## 3             |  0.071  0.013  0.002 | -0.131  0.044  0.008 |  0.168  0.093
+## 4             | -0.608  0.930  0.242 | -0.274  0.195  0.049 |  0.163  0.087
+## 5             | -0.310  0.242  0.084 | -0.046  0.005  0.002 |  0.073  0.017
+## 6             | -0.687  1.186  0.227 | -0.242  0.153  0.028 |  0.053  0.009
+## 7             | -0.002  0.000  0.000 |  0.079  0.016  0.005 | -0.032  0.003
+## 8             | -0.083  0.017  0.005 |  0.217  0.122  0.031 | -0.228  0.171
+## 9             |  0.213  0.114  0.026 |  0.438  0.500  0.110 |  0.076  0.019
+## 10            |  0.326  0.267  0.053 |  0.561  0.820  0.158 |  0.188  0.117
+##                 cos2  
+## 1              0.000 |
+## 2              0.072 |
+## 3              0.013 |
+## 4              0.017 |
+## 5              0.005 |
+## 6              0.001 |
+## 7              0.001 |
+## 8              0.034 |
+## 9              0.003 |
+## 10             0.018 |
+## 
+## Categories (the 10 first)
+##                  Dim.1    ctr   cos2 v.test    Dim.2    ctr   cos2 v.test  
+## breakfast     |  0.179  0.550  0.029  2.966 | -0.007  0.001  0.000 -0.111 |
+## Not.breakfast | -0.165  0.507  0.029 -2.966 |  0.006  0.001  0.000  0.111 |
+## Not.tea time  | -0.548  4.718  0.233 -8.348 |  0.059  0.057  0.003  0.900 |
+## tea time      |  0.425  3.657  0.233  8.348 | -0.046  0.044  0.003 -0.900 |
+## evening       |  0.245  0.738  0.031  3.057 | -0.275  0.965  0.040 -3.437 |
+## Not.evening   | -0.128  0.386  0.031 -3.057 |  0.144  0.505  0.040  3.437 |
+## lunch         |  0.645  2.192  0.071  4.623 | -0.371  0.749  0.024 -2.656 |
+## Not.lunch     | -0.111  0.377  0.071 -4.623 |  0.064  0.129  0.024  2.656 |
+## dinner        | -0.877  1.935  0.058 -4.160 |  0.218  0.124  0.004  1.034 |
+## Not.dinner    |  0.066  0.146  0.058  4.160 | -0.016  0.009  0.004 -1.034 |
+##                Dim.3    ctr   cos2 v.test  
+## breakfast     -0.126  0.356  0.015 -2.088 |
+## Not.breakfast  0.116  0.329  0.015  2.088 |
+## Not.tea time   0.284  1.656  0.062  4.323 |
+## tea time      -0.220  1.283  0.062 -4.323 |
+## evening        0.344  1.906  0.062  4.295 |
+## Not.evening   -0.180  0.996  0.062 -4.295 |
+## lunch         -0.105  0.076  0.002 -0.755 |
+## Not.lunch      0.018  0.013  0.002  0.755 |
+## dinner         1.046  3.603  0.082  4.963 |
+## Not.dinner    -0.079  0.271  0.082 -4.963 |
+## 
+## Categorical variables (eta2)
+##                 Dim.1 Dim.2 Dim.3  
+## breakfast     | 0.029 0.000 0.015 |
+## tea.time      | 0.233 0.003 0.062 |
+## evening       | 0.031 0.040 0.062 |
+## lunch         | 0.071 0.024 0.002 |
+## dinner        | 0.058 0.004 0.082 |
+## always        | 0.034 0.035 0.066 |
+## home          | 0.006 0.000 0.026 |
+## work          | 0.101 0.038 0.078 |
+## tearoom       | 0.384 0.015 0.000 |
+## friends       | 0.207 0.060 0.015 |</code></pre>
+<pre class="r"><code>#Print a plot of the first two dimensions:
+plot(my_mca, invisible = c(&quot;ind&quot;), cex = 0.7)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-9-1.png" width="768" /></p>
+<hr />
+</div>
+</div>
+<div id="mca-interpretation" class="section level2" number="5.3">
+<h2 number="5.3"><span class="header-section-number">5.3</span> MCA interpretation</h2>
+<hr />
+<p>First off, looking at our eigenvalues table, our data seems quite homogenous. This is reflected by the fact that the first two dimensions of the MCA are only able to explain 15.6% of the total variance in the data. In absolute terms this is not much more than what we would expect in random data for each dimension (100% / 33 dimensions = about 3%). However, in relative terms this is still quite a bit better.</p>
+<p>The tables for categories and individuals can be interpreted in identical fashion: the first column is the row’s contribution (or coordinates) for each dimension. The second column is percentage of contribution to the variance of the dimension. Third is cos2, i.e. the squared correlation of the row to the dimension. And finally v.test is a normalized statistic for the rows coordinate on the dimension. Had we used supplementary variables in our analysis, a similar table would have been printed for them.</p>
+<p>From the MCA factor plot we would be tempted to make following deductions: 60+ individuals tend to drink our upscale (unpackaged) tea (at a teashop). Similarly, (a probably correct) inference is that 15-24 individuals are more often students. But…….</p>
+<hr />
+<div id="the-devil-is-in-the-detail" class="section level3" number="5.3.1">
+<h3 number="5.3.1"><span class="header-section-number">5.3.1</span> The devil is in the detail!</h3>
+<hr />
+<p>HOWEVER, interpreting the results of MCA is more complex than that: the above deductions are not all correct!</p>
+<p>Let’s illustrate my point by doing an alternative MCA with the same data:</p>
+<pre class="r"><code>#Choose variables that were seemingly associated with drinking the &quot;upscale&quot; tea
+#(We, as a teashop, whish to maximize our profits!)
+tea3 &lt;- tea[(colnames(tea) %in% c(&quot;how&quot;, &quot;age_Q&quot;, &quot;where&quot;, &quot;Tea&quot;, &quot;SPC&quot;,&quot;price&quot;))]
+
+#MCA
+my_mca &lt;- MCA(tea3, graph = FALSE)
+
+#Let&#39;s skip the text output and just print the plot:
+plot(my_mca, invisible = c(&quot;ind&quot;), cex = 0.7)</code></pre>
+<p><img src="chapter5_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
+<hr />
+<div id="interpretation" class="section level4" number="5.3.1.1">
+<h4 number="5.3.1.1"><span class="header-section-number">5.3.1.1</span> Interpretation</h4>
+<hr />
+<p>Looking at the first plot, we would have been tempted to say that yes, indeed, 60+ individuals know their tea and mostly drink “upscale” tea. Infact, on dimesion 1 being 60+ is somewhat opposed to drinking “cheap” tea. Yet, looking at the plot from our second MCA, quite the opposite is seemingly true: being 60+ is suddenly associated with drinking cheap tea! What gives?</p>
+<p>This discrepancy is caused mainly by the fact that each of our dimension catches only fairly small amounts of variance in our data. As such we should be considering more than only 2 dimensions at once. This brings us, however, to the original dilemma with our data: we would have liked to reduce the dimensions such that we could visualize the data. This task was not, unfortunately, reliably accomplished by MCA in this scenario…</p>
+<hr />
+</div>
+</div>
+</div>
+<div id="a-critique-of-mca" class="section level2" number="5.4">
+<h2 number="5.4"><span class="header-section-number">5.4</span> A critique of MCA</h2>
+<p>(… and why it should probably not have been taught as part of this course.)</p>
+<p>I must emphasize that interpreting MCA is quite challenging and fraught with pitfalls that can lead to entirely wrong conclusions about the data (as demonstrated above) if due diligence is not excercised. Thus, any perceived correlations/patterns observed or perceived based on MCA should be confirmed by examining the source data. IMHO, in only limited cases MCA can be useful for getting a general understanding of patterns in multivariate categorical data. Similarly, using MCA for deriving a continuous reduction of categorical data is a seemingly fringe use case (although, admittedly, I’m no expert in the field).</p>
+<p>For example, in our hypothetical case of a teashop the truly significant research question would have probably been more focused: e.g. “to which categories of tea drinkers we should focus our advertising to maximize our sales of the most pricy”upscale" tea". In such a case even a simple correspondece analysis would have made more sense as compared to MCA.</p>
+<p>Ironically, the “tea” data is a prime example of where MCA fails as a dimensionality reduction technique and serves more to confuse rather than help. The large number of categorical variables in the data fail to reduce to meaningful representations on a comprehensible amount of dimensions. Subsequently, if more dimensions are considered, the results of the MCA become increasingly difficult to understand — perhaps even more so than just considering individual variables in the data.</p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

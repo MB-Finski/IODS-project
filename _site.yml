@@ -15,6 +15,9 @@ navbar:
     - text: "Clustering"
       icon: fa-th
       href: chapter4.html
+    - text: "Dim reduction"
+      icon: fa-dice-d20
+      href: chapter5.html
 output:
   html_document:
     theme: lumen

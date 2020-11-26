@@ -1,0 +1,461 @@
+---
+title: "Chapter 5: Clustering and classification"
+date: "*2020-11-25*"
+output:
+  html_document:
+    toc: true
+    toc_float:
+        smooth_scroll: true
+        collapsed: false
+    toc_depth: 2
+    number_sections: true
+
+---
+
+```{r, echo=FALSE, results=FALSE}
+#Let's make our reports reproducible
+set.seed(469771822)
+```
+
+***
+
+The data, as well as, its structure, dimensions, and origins have been described previously in [here](https://github.com/MB-Finski/IODS-project/blob/master/data/create_human.r).
+
+***
+
+# Graphical overview of data
+
+```{r}
+
+#Read in the data
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", stringsAsFactors = TRUE, sep = ",",header = TRUE)
+
+library(gtsummary)
+#Print out a summary table of all variables
+my_table <- tbl_summary(human,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ "continuous2",
+                        statistic = list(all_continuous() ~ c("{mean} ({sd})",
+                                                              "{median} ({p25}, {p75})", 
+                                                              "{min}, {max}")))
+
+#Add some missing elements to the table and print it out
+my_table %>% bold_labels()
+```
+
+***
+
+### Interpretation of the summary table
+
+***
+
+All variables are continuous and numerical. The scales and numerical variance of the variables vary wildly, which means that we absolutely should scale the data before running PCA.
+
+The data show mostly fairly symmetrical distributions based on the median and mean values. Some values like GNI, Ado.Birth and Mat.Mor are somewhat skewed, although
+their standard deviations, too, are quite large.
+
+***
+
+## Correlations
+
+***
+
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+library(GGally)
+#library(plotly)
+
+#Print a scatter plot matrix
+ggpairs(data = human)
+
+#Correlation plot
+ggcorr(data = human)
+```
+
+***
+
+### Interpretation of plots
+
+***
+
+Visual inspection confirms our numerical observations of the distributions' skewness for some variables. Also, quite strong correlation can be seen in the data for some variables.
+
+For example, there is considerable negative correlation for Mat.Mor vs GNI, Life.Exp, Edu.Exp, and Edu2.FM. Similar negative correlations exist for Ado.Birth.
+
+Ado.Birth and Mat.Mor, as well as, Edu.Exp and Life.Exp have a strong (>0.7) positive correlation. 
+
+Not all correlation seen in the data is necessarily linear: for example, GNI and Edu.Exp demonstrate a seemingly non-linear correlation. Moreover, there is heteroscedasticity in the data (for example GNI vs Edu.Exp)
+which would suggest that perhaps some variables in the data would benefit from log-transform before running the PCA. Alas, such considerations were not instructed for this assignment.
+
+***
+
+# Principal component analysis
+
+***
+
+Time for some principal component analysis. First, lets run the analysis on unscaled data.
+
+***
+
+## Before scaling
+
+***
+
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Do PCA using SVD
+my_unscaled_pca <- prcomp(human)
+
+my_unscaled_pca
+summary(my_unscaled_pca)
+
+#Print calculate the PC labels with the percentages of variance for the biplots
+variance_precentage <- round(100*summary(my_unscaled_pca)$importance[2, ], digits = 3)
+variance_precentage <- paste0(names(variance_precentage), " (", variance_precentage, " %)")
+
+#Print the biplot as requested
+biplot(my_unscaled_pca, cex = c(0.6, 1), col = c("grey40", "red"), xlab = variance_precentage[1], ylab = variance_precentage[2])
+
+#What on earth is meant by "captions ... in your plots" in the instructions
+#is lost on me but here's how you can add (confusing) text to your plot:
+text(x=-170000,y=-28000, labels = paste0("Caption: GNI has by far the greates\n",
+                                  "contribution to the unscaled variance in the\n",
+                                  "data. Indeed, PC1 (aligned with GNI) explains\n",
+                                  "99.99% of the variance in the data."), cex = 0.75,col="blue")
+
+```
+
+***
+
+## After scaling
+
+***
+
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Scale the data
+human_scaled <- scale(human)
+
+#Do PCA using SVD
+my_scaled_pca <- prcomp(human_scaled)
+
+my_scaled_pca
+summary(my_scaled_pca)
+
+#Print calculate the PC labels with the percentages of variance for the biplots
+variance_precentage <- round(100*summary(my_scaled_pca)$importance[2, ], digits = 3)
+variance_precentage <- paste0(names(variance_precentage), " (", variance_precentage, " %)")
+
+#Print the biplot as requested
+biplot(my_scaled_pca, cex = c(0.6, 1), col = c("grey40", "red"), xlab = variance_precentage[1], ylab = variance_precentage[2])
+text(x=-5,y=13, labels = paste0("Caption: After scaling, PC1 explains only\n",
+                                  "53.6% of variance in the data. Variables,\n",
+                                  "whose arrows align with each other, are also correlated.\n",
+                                  "Similarly, aligning with either PC1 or PC2 axes\n",
+                                  "signifies the variable's contribution to said component.\n"), cex = 0.75,col="blue")
+```
+
+***
+
+## Interpretation of PCA results
+
+***
+
+### General considerations of PCA
+
+In laymans terms, principal componen analysis (PCA) is a method whereby a maximum of the variance in multivariate data is distilled
+to as few degrees of freedom (or principal components) as possible using a linear function. In visual terms, a principal component can be described as a multivariate axis 
+through the data. All observations are then projected on to this axis. Each principal component is derived by aligning this "axis" (or principal component) with the dimension of greatest 
+multivariate variance in the data. This variance (or dimension) is then "removed" from the data for the calculation of subsequent principal components (i.e. the principal components are at a right
+angle to each other). Thus, after the first principal component, each subsequent principal component is able to describe only as much or less variance than the previous component. 
+In the theoretical case of *perfectly* multivariate normal data, each principal component will be equally important for describing the data. The number of principal components is 
+always as great as the degrees of freedom (=number of variables) in the data -- otherwise the PCA would not be able to describe
+all variance in the data. 
+
+### Sginificance of scaling/normalizing variables
+
+Since variance can differ wildly for different variables, scaling the data is often necessary make better sense of the results. For example, if one variable in the data has much higher variance 
+compared to other variables the first principal component will always align with this variable. This result may be nonsensical, especially if this variable simply has a larger scale or 
+higher measurement noise which explains the high variance. However, if the intention is to simply identify the components (or axis) with the highest variance in the data, then, scaling is
+counter intuitive.
+
+It should be noted that scaling the data essentially assigns "equal importance" for each variable in the PCA. Depending on the above considerations this may or may not make sense in your
+particular use case.
+
+# PCA: Non-scaled vs scaled 
+
+***
+
+In the case of our example data, the variance of GNI is numerically far greater than for any other variable in the data. Thus, the before scaling PC1 almost entirely aligns with GNI and, in this analysis, explains 99.99% of variance
+in the data. This results makes no sense in our case since the variables are measured at completely different scales.
+
+After scaling, GNI has lost its disproportinately large significance, as can clearly be seen from the biplot. 
+
+***
+
+# Interpretation: PC1 and PC2 
+
+***
+
+As discussed above PC1 in the latter biplot is the multivariate dimeansion/axis in the scaled data where most of the data's variance (53.6% to be exact) aligns. Thus, most of the variance in our data with
+8 degrees of freedom can be described with only a single dimension. For PC1, the most significant variable was Life.Exp with Mat.Mor a close second. We can also assess correlations (since we scaled the data)
+in the data by looking at the sign and magnitude of the PC coefficients (i.e. the arrows aligning in the biplot). Opposite facing arrows imply negative correlations.
+
+The second principal component is calculated after the variance described by PC1 is "substracted" from the data. Thus, PC2 is able to predict less of the multivariate variance in the data (16.2% to be exact)
+Also, as in the graph, PC2 is mathematically at a right angle to PC1 and thus they are wholly uncorrelated. The interpretation of the variables significance for PC2 is similar to PC1.
+
+***
+
+## Extracurricular activities
+
+### When to scale or not to scale the data before PCA
+
+***
+
+To clarify the significance of scaling the data before PCA, let's do a practical thought exercise:
+
+Let's say that we have a database face images and we wish to know which features in the image 
+optimally tell apart the faces from each individual so as to make predictions of identity on any subsequent face images. For simplicity's sake,
+let's assume we can measure only three features from the images: X1, X2, and X3. These variables may or may not have
+different variance and/or be correlated. Additionally they may have different repeatability.
+
+Now, let's further assume that computing these variables for a single face image is time consuming and, even more importantly, comparing them through our vast database of face images
+is extremely resource intensive. Thus, we wish to find only a single dimensional combination/reduction of these variables that can best be used to
+distinguish one face from another. For this purpose of dimensionality reduction we wish to use PCA.
+
+**The question is: should we or should we not scale the variables X1, X2, and X3?**
+
+The correct answer is: it depends. 
+
+For example, let's assume you know from previous research that these features are of roughly equal importance to telling apart the 
+In such a case, standardizing/scaling the data makes perfect sense. 
+
+As an opposite example, let's assume that you know the uncertainty of measuring X1, X2, and X3 from double images of same individuals. Now if you have adjusted X1, X2, and X3 according
+to this uncertainty (for example, by dividing with intra-individual standard deviation of each variable) before running PCA, you should absolutely not scale these variables since you're interested
+in catching the maximum amount of variance in the data with a single linear variable.
+
+***
+
+### A simulated example of the face recognition dilemma
+
+***
+
+Let's do an example analysis of the above face recognition dilemma with simulated data:
+
+***
+
+```{r fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+library(MASS)
+library(psych)
+
+#First let's create a table with two highly correlated variables and 
+#one completely non-correlated variable with significantly higher variance
+
+#Covariance matrix of simulated data:
+#    X1: X2: X3:
+#X1: 1   1   0
+#X2: 1   1   0
+#X3: 0   0   16
+#
+# X1 and X2 will show sd of 1 and are have positive covariance
+# X3 has sd of 4 and shows no covariance with either X1 or X2
+#
+# Matrix values as vector: c(1,1,0,1,1,0,0,0,10)
+corr_matrix <- matrix(c(1, 1, 0, 1, 1, 0, 0, 0, 10), nrow = 3, ncol = 3)
+
+#Means of zero for all variables
+var_means <- c(0, 0, 0)
+
+#Generate the multivariate normal data table:
+test_data <- mvrnorm(n = 10000, mu = var_means, Sigma = corr_matrix, empirical = TRUE)
+
+#Describe the simulated data:
+describe(test_data)
+
+#Do the pca on the non-scaled data
+my_simulated_pca <- prcomp(test_data)
+
+#Print out 
+my_simulated_pca
+summary(my_simulated_pca)
+
+#Now do the pca after scaling data:
+my_simulated_pca <- prcomp(scale(test_data))
+
+#Print out 
+my_simulated_pca
+summary(my_simulated_pca)
+
+```
+
+***
+
+### Interpretation of the example analysis
+
+***
+
+As can be seen from the example analysis, the results are completely different before and after scaling. Before scaling, X3 alone explains the most variance in the data.
+However, if each variable is assigned equal importance (i.e. variables are scaled before PCA), the combination of X1 and X2 (PC1 coefficients of -0.7 for both) is the
+best combination of the available variables for telling the "individuals" apart (= maximal variance on a single dimension).
+
+***
+
+# Multiple correspondence
+
+***
+
+## Exploration of dataset
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Let's make our reports reproducible
+library(FactoMineR)
+
+#Load the dataset
+data(tea)
+
+#Explore the structure and dimensions.
+str(tea)
+```
+
+### Visual Exploration
+
+***
+
+Frankly, meaningful visual exploration of the dataset with 35 categorical variables, most of which have only 2 levels, is challenging (and a bit too much for a contingency table).
+Infact, MCA can be used to perhaps simplify this issue but we'll get back to this later...
+
+In the meanwhile, a table instead of a plot, IMHO, is the most meaningful option for displaying the data.
+
+***
+
+```{r}
+#Print out a table of all variables
+my_table <- tbl_summary(tea,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ "continuous2",
+                        statistic = list(all_continuous() ~ c("{mean} ({sd})",
+                                                              "{median} ({p25}, {p75})", 
+                                                              "{min}, {max}"),
+                        all_categorical() ~ "{n} / {N} ({p}%)"))
+
+#Add some missing elements to the table and print it out
+my_table %>% bold_labels()
+```
+
+***
+
+Nothing much to interpret here. Frequencies and proportions are printed as requested.
+
+***
+
+## Running the MCA analysis
+
+***
+
+### Forming a research question
+
+***
+
+So what are we running a multiple correspondence analysis for? MCA can be viewed as analogous to PCA; however, it is a generalization for catogorical variables. Continuous variables can be projected
+onto the dimensions (analogous to PCA principal components) created by the MCA. Thus, even continues variables can be contrasted with different patterns of categorical variables.
+
+As such, the use cases of MCA and, also, analogous to use cases of PCA; reducing dimensions in a multivariate categorical data to as few significant degrees of freedom (or in this case patterns in the categorical variables)
+as possible. Similar to the variable coefficients of principal components in PCA we can use the DMA to also study associations with variable categories.
+
+For forming a valid research question, let's say we're working at a tea shop and we wish to enhance our understanding of our clientele. More specifically we wish to indentify possible patterns
+in habits of tea consumption. 
+
+To identify possible patterns in tea consumption habits we include the first 18 variables (questions related to tea consumption) and demographic factors: sex, SPC, and age_q into our MCA analysis.
+
+***
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Generate drop unnecessary variables:
+tea2 <- tea[c(1:18, 20:21, 23)]
+
+#Let's do the MCA analysis. 
+my_mca <- MCA(tea2, graph = FALSE)
+
+#Let's print a summary of our MCA
+summary(my_mca)
+
+
+#Print a plot of the first two dimensions:
+plot(my_mca, invisible = c("ind"), cex = 0.7)
+
+
+```
+
+***
+
+## MCA interpretation
+
+***
+
+First off, looking at our eigenvalues table, our data seems quite homogenous. This is reflected by the fact that the first two dimensions of the MCA
+are only able to explain 15.6% of the total variance in the data. In absolute terms this is not much more than what we would expect in random data for
+each dimension (100% / 33 dimensions = about 3%). However, in relative terms this is still quite a bit better.
+
+The tables for categories and individuals can be interpreted in identical fashion: the first column is the row's contribution (or coordinates) for each dimension.
+The second column is percentage of contribution to the variance of the dimension. Third is cos2, i.e. the squared correlation of the row to the dimension. And
+finally v.test is a normalized statistic for the rows coordinate on the dimension. Had we used supplementary variables in our analysis, a similar table would have been printed
+for them.
+
+From the MCA factor plot we would be tempted to make following deductions: 60+ individuals tend to drink our upscale (unpackaged) tea (at a teashop). Similarly, (a probably correct) inference
+is that 15-24 individuals are more often students. But.......
+
+***
+
+### The devil is in the detail!
+
+***
+
+HOWEVER, interpreting the results of MCA is more complex than that: the above deductions are not all correct! 
+
+Let's illustrate my point by doing an alternative MCA with the same data:
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+#Choose variables that were seemingly associated with drinking the "upscale" tea
+#(We, as a teashop, whish to maximize our profits!)
+tea3 <- tea[(colnames(tea) %in% c("how", "age_Q", "where", "Tea", "SPC","price"))]
+
+#MCA
+my_mca <- MCA(tea3, graph = FALSE)
+
+#Let's skip the text output and just print the plot:
+plot(my_mca, invisible = c("ind"), cex = 0.7)
+```
+
+***
+
+#### Interpretation
+
+***
+
+Looking at the first plot, we would have been tempted to say that yes, indeed, 60+ individuals know their tea and mostly drink "upscale" tea. Infact, on dimesion 1
+being 60+ is somewhat opposed to drinking "cheap" tea. Yet, looking at the plot from our second MCA, quite the opposite is seemingly true: being 60+ is suddenly
+associated with drinking cheap tea! What gives? 
+
+This discrepancy is caused mainly by the fact that each of our dimension catches only fairly small amounts of variance in our data. As such we should be considering
+more than only 2 dimensions at once. This brings us, however, to the original dilemma with our data: we would have liked to reduce the dimensions such that we could visualize the
+data. This task was not, unfortunately, reliably accomplished by MCA in this scenario...
+
+
+***
+
+## A critique of MCA 
+(... and why it should probably not have been taught as part of this course.)
+
+I must emphasize that interpreting MCA is quite challenging and fraught with pitfalls that can lead to entirely wrong conclusions about the data (as demonstrated above)
+if due diligence is not excercised. Thus, any perceived correlations/patterns observed or perceived based on MCA should be confirmed by examining the source data. 
+IMHO, in only limited cases MCA can be useful for getting a general understanding of patterns in multivariate categorical data. Similarly, using MCA for deriving a continuous
+reduction of categorical data is a seemingly fringe use case (although, admittedly, I'm no expert in the field).
+
+For example, in our hypothetical case of a teashop the truly significant research question would have probably been more focused: e.g. "to which categories
+of tea drinkers we should focus our advertising to maximize our sales of the most pricy "upscale" tea". In such a case even a simple correspondece analysis
+would have made more sense as compared to MCA. 
+
+Ironically, the "tea" data is a prime example of where MCA fails as a dimensionality reduction technique and serves more to confuse rather than help. 
+The large number of categorical variables in the data fail to reduce to meaningful representations on a comprehensible amount of dimensions. Subsequently, if more dimensions
+are considered, the results of the MCA become increasingly difficult to understand --- perhaps even more so than just considering individual variables in the data.
+
+
