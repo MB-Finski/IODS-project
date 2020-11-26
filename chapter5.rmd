@@ -146,9 +146,9 @@ variance_precentage <- paste0(names(variance_precentage), " (", variance_precent
 
 #Print the biplot as requested
 biplot(my_scaled_pca, cex = c(0.6, 1), col = c("grey40", "red"), xlab = variance_precentage[1], ylab = variance_precentage[2])
-text(x=-5,y=12.5, labels = paste0("Caption: After scaling, PC1 explains only\n",
+text(x=-5,y=12.5, labels = paste0("Caption: After scaling, PC1 explains \"only\"\n",
                                   "53.6% of variance in the data. Variables,\n",
-                                  "whose arrows align with each other, are also correlated.\n",
+                                  "whose arrows align with each other, are correlated.\n",
                                   "Similarly, aligning with either PC1 or PC2 axes\n",
                                   "signifies the variable's contribution to said component.\n"), cex = 0.75,col="blue")
 ```
