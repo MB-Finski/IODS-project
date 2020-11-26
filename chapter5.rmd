@@ -1,5 +1,5 @@
 ---
-title: "Chapter 5: Clustering and classification"
+title: "Chapter 5: Dimensionality reduction techniques"
 date: "*2020-11-25*"
 output:
   html_document:
@@ -19,7 +19,8 @@ set.seed(469771822)
 
 ***
 
-The data, as well as, its structure, dimensions, and origins have been described previously in [here](https://github.com/MB-Finski/IODS-project/blob/master/data/create_human.r).
+The data, as well as, its structure, dimensions, and origins have been described previously in [here](https://github.com/MB-Finski/IODS-project/blob/master/data/create_human.r). So, we'll skip
+repeating the description of data...
 
 ***
 
@@ -145,7 +146,7 @@ variance_precentage <- paste0(names(variance_precentage), " (", variance_precent
 
 #Print the biplot as requested
 biplot(my_scaled_pca, cex = c(0.6, 1), col = c("grey40", "red"), xlab = variance_precentage[1], ylab = variance_precentage[2])
-text(x=-5,y=13, labels = paste0("Caption: After scaling, PC1 explains only\n",
+text(x=-5,y=12.5, labels = paste0("Caption: After scaling, PC1 explains only\n",
                                   "53.6% of variance in the data. Variables,\n",
                                   "whose arrows align with each other, are also correlated.\n",
                                   "Similarly, aligning with either PC1 or PC2 axes\n",
@@ -224,12 +225,12 @@ distinguish one face from another. For this purpose of dimensionality reduction 
 
 The correct answer is: it depends. 
 
-For example, let's assume you know from previous research that these features are of roughly equal importance to telling apart the 
+For example, let's assume you know from previous research that these features are of roughly equal importance to telling apart the individuals based on a face image.
 In such a case, standardizing/scaling the data makes perfect sense. 
 
 As an opposite example, let's assume that you know the uncertainty of measuring X1, X2, and X3 from double images of same individuals. Now if you have adjusted X1, X2, and X3 according
 to this uncertainty (for example, by dividing with intra-individual standard deviation of each variable) before running PCA, you should absolutely not scale these variables since you're interested
-in catching the maximum amount of variance in the data with a single linear variable.
+in catching the maximum amount of inter-individual variance in the data with a single linear variable.
 
 ***
 
@@ -410,7 +411,7 @@ is that 15-24 individuals are more often students. But.......
 
 HOWEVER, interpreting the results of MCA is more complex than that: the above deductions are not all correct! 
 
-Let's illustrate my point by doing an alternative MCA with the same data:
+Let's illustrate this point by doing an alternative MCA with the same data:
 
 ```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 
@@ -456,6 +457,6 @@ would have made more sense as compared to MCA.
 
 Ironically, the "tea" data is a prime example of where MCA fails as a dimensionality reduction technique and serves more to confuse rather than help. 
 The large number of categorical variables in the data fail to reduce to meaningful representations on a comprehensible amount of dimensions. Subsequently, if more dimensions
-are considered, the results of the MCA become increasingly difficult to understand --- perhaps even more so than just considering individual variables in the data.
+are considered, the results of the MCA become increasingly difficult to understand --- perhaps even more so than just considering individual pairs of variables in the data.
 
 

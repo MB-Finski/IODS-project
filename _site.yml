@@ -16,7 +16,7 @@ navbar:
       icon: fa-th
       href: chapter4.html
     - text: "Dim reduction"
-      icon: fa-dice-d20
+      icon: fa-sitemap
       href: chapter5.html
 output:
   html_document:
