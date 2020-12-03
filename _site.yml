@@ -18,6 +18,9 @@ navbar:
     - text: "Dim reduction"
       icon: fa-sitemap
       href: chapter5.html
+    - text: "Longitudinal data"
+      icon: fa-ruler-combined
+      href: chapter6.html
 output:
   html_document:
     theme: lumen

@@ -1,0 +1,566 @@
+---
+title: "Chapter 6: Analysis of longitudinal data"
+date: "*2020-12-03*"
+output:
+  html_document:
+    toc: true
+    toc_float:
+        smooth_scroll: true
+        collapsed: false
+    toc_depth: 2
+    number_sections: true
+
+---
+
+```{r, echo=FALSE, results=FALSE}
+#Let's make our reports reproducible
+set.seed(469771822)
+```
+
+***
+
+# Part 1: Summary variables
+
+***
+
+## Overview of data
+
+***
+
+In this first part we're going to use data from a nutrition study on ins (see Crowder & Hand 1990). The data consists of 16 rats
+divided into 3 different nutritional regimens. The response variable is the weight of the rats measured repeatedly over the
+course of the study. The time is measured in days. 
+
+First, let's take a peek at the data in table format.
+
+***
+
+```{r}
+
+#Read the data in wide format
+rats_wide <- read.table("./data/rats_data.txt", header = TRUE)
+str(rats_wide)
+
+library(gtsummary)
+#Print out a summary table of all variables (we can drop out the
+# first variable [subject])
+my_table <- tbl_summary(rats_wide[2:13],
+                        by = Group,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ "continuous2",
+                        statistic = list(all_continuous() ~ c("{N_nonmiss}",
+                                                              "{mean} ({sd})",
+                                                              "{median} ({p25}, {p75})", 
+                                                              "{min}, {max}")))
+
+#Add some refining touches to the table and print it out
+my_table %>% bold_labels()
+```
+
+As you can see above, the data consists of 16 rats total. Group 1 has 8 rats and groups 2 and 3 have 4 rats. Conveniently there are no missing values
+so we won't have to replace them or remove rats from the analysis. However, it should be noted that not all time intervals are equivalent.
+
+At a quick glance, the data seems quite normally distributed. It noticeable how the starting levels for the mice's weights are quite different. Also there seems to
+be quite a bit of difference in the variance of weight in the different groups which is not explained by the variables difference in mean magnitude (e.g. compare
+groups 2 and 3).
+
+Now, the intention of this first part is to avoid proper longitudinal modeling of the data and, instead, analyze the data using a suitable summary variable.
+
+However, we must first get a better grip at what's going on. Let's do some graphical exploration of the data:
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+library(GGally)
+library(plotly)
+
+#Read the data in long format for easier graphing
+rats_long <- read.table("./data/rats_long_data.txt", header = TRUE)
+str(rats_long)
+
+
+#... The first two variables should be factor variables.
+rats_long[1:2] <- lapply(rats_long[1:2], factor)
+str(rats_long)
+
+#Let's greate a new grouped table with mean and se of weight
+#for both groups at each timepoint
+rats_long_grouped <- rats_long %>%
+        group_by(Group, time) %>%
+        summarise(
+          mean_weight = mean(weight),
+          mean_weight_se = sd(weight) / sqrt(length(weight)))
+
+
+#At the data on an individual level (and also print the means)
+my_line_plot <- ggplot(rats_long, mapping = aes(x = time, y = weight, colour = Group,group = ID)) +
+                        geom_line(rats_long_grouped, mapping = aes(x = time, y = mean_weight, colour = Group,group = Group), alpha = 0.6, size = 2)+
+                        geom_errorbar(rats_long_grouped, mapping = aes(x = time, y = mean_weight, colour = Group,group = Group,ymin=mean_weight-mean_weight_se, ymax=mean_weight+mean_weight_se))+
+                        geom_line(alpha = 0.2, size = 1) 
+        
+ggplotly(my_line_plot)
+
+
+#Let's distort the table a little bit to give better spacing for the box plot
+rats_long2 <- rats_long
+rats_long2$time[rats_long2$time == 44] <- 45
+rats_long2$time[rats_long2$time == 43] <- 42
+
+#Box plot. Don't really need this, but printing it just because it was instructed...
+my_box_plot <- ggplot(rats_long2, mapping = aes(x = time, y = weight, colour = Group,group = Group)) +
+                        geom_boxplot(size = 1, width=0.5, position=position_dodge2(width =5,padding = 0,preserve = "single")) +
+                        stat_summary(fun=mean, geom="point", shape=23, size=2, position=position_dodge2(width =2.1,padding = 0))
+        
+       
+layout(ggplotly(my_box_plot),boxmode = "group")
+
+#Print out the graph with standardized (by timepoint) weights.
+#These are very little use to us after the first two graphs.
+rats_long <- rats_long %>%
+            group_by(time) %>%
+            mutate(scaled_weight = scale(weight)) %>%
+            ungroup()
+
+ggplotly(ggplot(rats_long, aes(x = time, y = scaled_weight, group = ID, color = Group)) +
+        geom_line() +
+        ylab("Scaled weight"))
+```
+
+
+***
+
+From the graphs we could hypothesize that one particular rat (ID = 12) in group 2 may even have switched groups or is simply an aberrant observation (if not ourlier) 
+in it's intercept weight. Infact, it very much seems that groups 2 and 3 are actually part of the one and same group. Judging wether this sinqular observation
+in a group of 4 observations is an outlier is quite unreliable, so we'll let it be. Also, ID = 2 that is shown as an outlier in the boxplots, should not be considered
+an outlier with such a low n. This is especially true when considering that this observation is contained well within the 3*IQR limits.
+
+Ultimately, what we should analyze in the data depends entirely on what our research question is. The instructions for this chapter leave this
+quite unclear and upto interpretation. Keeping with the theme of Chapter 8 in MABS, let's assume we'd be interested in overall mean weight of the rats over 
+the whole study period. As a secondary outcome measure let's also consider the mean weight after eliminating the effect of the baseline
+weight (just like in MABS Chapter 8).
+
+There's one cruacial difference in the RATS and BPRS data that we should consider while implementing the MABS Chapter 8 analysis:
+our RATS data does not have equal time intervals. Therefore, comparing the overall group means is not applicable here. Instead, we should compare
+the mean AUC of the weight for each group.
+
+***
+
+## AUC comparison of groups
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+#Let's use the rats_wide table for calculating AUC
+#for each individual rat
+rats_wide <- read.table("./data/rats_data.txt", header = TRUE)
+num_of_rats <- nrow(rats_wide)
+num_of_timepoints <- ncol(rats_wide)-2
+column_names <- colnames(rats_wide)
+rat_auc_weights <- c()
+
+#A simple loop for calculating AUC for each rat
+for (i in 1:num_of_rats) {
+  rat_auc <- 0
+  for (n in 1:(num_of_timepoints - 1)) {    
+    time_interval <- (substring(column_names[n + 3], 3, 4) %>% as.numeric) -
+                      (substring(column_names[n + 2], 3, 4) %>% as.numeric)
+    
+    rat_auc <- rat_auc + ((rats_wide[i,n + 2] + rats_wide[i,n + 3]) / 2) * time_interval
+  }
+  
+  rat_auc_weights <- append(rat_auc_weights,rat_auc)
+}
+
+#Store the AUC values in the wide table
+rats_wide2 <- rats_wide
+rats_wide2$weight_auc <- rat_auc_weights
+
+#Graph the AUC values:
+my_box_plot <- ggplot(rats_wide2, mapping = aes(x = Group, y = weight_auc, colour = Group)) +
+                        geom_boxplot(size = 1, width = 0.5) +
+                        stat_summary(fun.y=mean, geom="point", shape=23, size=4, color="red", fill="red")
+
+        
+ggplotly(my_box_plot)
+
+```
+
+***
+
+From the box plot we can see that in group 1 the outlier is now more than 3*IQR from the median. However, as stated before, given the extremely small sample size
+one should be weary of excluding ourliers. So we'll leave it be. Also, groups 2 and 3 show somewhat skewed distributions. We'll also ignore this in running the
+anova.
+
+Similarly, we'll not cover the assumptions of ANOVA, as this has not been covered in this course, so we'll just conveniently ingnore them...
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+#Run anova to see if there's a statistically significant difference in the mean AUC
+#of weight for the groups
+my_anova <- aov(weight_auc~Group, data = rats_wide2)
+summary(my_anova)
+
+#There's is a significant difference in mean_auc for the groups.
+#Let's see which ones, specifically, with Tukey Honest Significant differences
+TukeyHSD(my_anova)
+```
+
+***
+
+So, yes, there's a quite significant difference in mean AUC of weight between the groups. Specifically between groups 1 and 2 (p<0.001) and 1 and 3 (p<0.001)
+but not 2 and 3 (p=0.29).
+
+We can see how much the starting weight had influence in this outcome by simply substracting baseline weight auc (over whole study period) from
+the "weight_auc". This is cheating a little bit, perhaps, but the outcome is the same as running a regression model and including the basline weight
+as a covariate as was done in the Data camp exercise.
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+rats_wide3 <- rats_wide2
+follow_up_period <- 64 - 1
+
+rats_wide3$baseline_auc <- rats_wide3[,3] * follow_up_period
+rats_wide3$auc_minus_baseline <- rats_wide3$weight_auc - rats_wide3$baseline_auc
+
+str(rats_wide3)
+
+#Run anova to see if there's a statistically significant difference in the AUC
+#of weight for the groups after eliminating the effect of baseline
+my_anova <- aov(auc_minus_baseline~Group, data = rats_wide3)
+summary(my_anova)
+
+#There's is a significant difference between the groups, again.
+#Let's see which ones, specifically, with Tukey Honest Significant differences
+TukeyHSD(my_anova)
+```
+
+***
+
+Somewhat surprisingly there seems to be a statistically significant difference in the mean weights for groups 1 and 2 after adjusting for the baseline weight.
+It seems that the added mean weight, over the whole study period, is 1103 gram*days higher for the group 2 than group 1 (95% CI: 42.34 - 2164, p = 0.04).
+*Ex post facto*, evidence of this result could already be seen in the initial standardized graph.
+
+This result would suggest that we should perhaps take a closer look at the growth rates in the data. For this purpose a LMM is the best choice.
+
+***
+
+### An extension of the Datacamp exercises
+
+***
+
+Let's run a quick LMM on RATS like we originally should have done if we really were analyzing this data. Also, unlike in the Datacamp exercises let's also do 
+F-tests for the fixed-effects via Kenward-Roger approximation so we get some usable results, as well. (As before, we'll skip the evaluation of model assumptions.)
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+library(lme4)
+library(pbkrtest)
+library(lmerTest)
+str(rats_long)
+
+
+#Build the LMM model. For Kenward-Roger approximation we want REML for parameter estimation
+my_lmm <- lmer(weight ~ time + Group + time * Group +(time | ID), data = rats_long, REML = TRUE)
+
+anova(my_lmm, type = 2, ddf = "Kenward-Roger")
+```
+
+***
+
+Now, we can see that there's a clear difference in mean weight for the groups (p<0.001), in the weight over time (p<0.001), as well as, a difference in the
+slopes of weight over time between the groups (p = 0.006). Now, we may wish to inspect the effect slices, to acertain for which groups the slopes are different:
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#We need an additional library for estimating least-squares means
+library(emmeans)
+library(dplyr)
+
+#Let's visualize the mean slopes of weight for each group
+time_points <- pull(unique(rats_long[3]),time)
+emmip(my_lmm, Group ~ time, at = list(time = time_points))
+
+#Finally, do a pairwise comparison of the interaction slopes
+#(or effect slices, as they're termed in SAS)
+emtrends(my_lmm, pairwise ~ Group, var = "time")
+```
+***
+
+### LMM slope interpretation
+
+***
+
+As can be seen from above, the analysis of the effect slices (or comparison of group-wise slopes of weight) shows that, in absolute terms, Group 2 gained
+more in mean weight over the study period as compared to group 1 (p=0.005). The difference was non-significant between the other group combinations.
+
+Now, compared to the AUC analysis, the interpretation of this result is quite different. Now we can say that group 2 gained more weight over the study period
+whereas in the AUC analysis we could only say that the mean weight change beyond baseline was more positive over all timepoints during the study. In light of the AUC
+it would've been even possible that group 2 finished the study with a lower weight than group 1 if the mean weigh was greater over other timepoints. 
+
+All in all, the LMM was quite a bit more eloquent and protected us from issues with multiplicity.
+
+***
+
+
+# Part 2: LMM of BPRS data
+
+***
+
+The chapter 9 of MABS covers LMM analysis for data with normal response variables. As I have some passing experience with hierachical LMM already through my
+adventures in biostatistics, I'll perform the LMM as I'd do from previous experience. You can evaluate the results as compared to what's contained in
+the chapter 9 of MABS.
+
+The relevant assumptions of LMM are as follows:
+Statistical assumption  | Method used to verify/analyze
+---           | -------------
+The chosen model is appropriate for the studied effect (i.e. linear)  | Visual inspection of model residuals plotted against within subject factors
+The residuals of the model are normally distributed  | Visual inspection of the Q-Q plots of the residuals
+The variance of residuals is homogeneous vs fitted value   | Visual inspenction of pearson residual vs fitted value
+No significant outliers/influential observations | Cook's distance, DFBeta S, Restricted maximum likelihood distance etc.
+Random effects are normally distributed  | None; a theoretical assumption.
+
+
+***
+
+## Overview of data
+
+***
+
+```{r}
+
+#Read the data in wide format
+bprs_wide <- read.table("./data/bprs_data.txt", header = TRUE)
+str(bprs_wide)
+
+#Print out a summary table of all variables (we can drop out the
+# first variable [subject])
+my_table <- tbl_summary(bprs_wide[c(1,3:11)],
+                        by = treatment,
+                        digits = all_continuous() ~ 2,
+                        type = all_continuous() ~ "continuous2",
+                        statistic = list(all_continuous() ~ c("{N_nonmiss}",
+                                                              "{mean} ({sd})",
+                                                              "{median} ({p25}, {p75})", 
+                                                              "{min}, {max}")))
+
+#Add some refining touches to the table and print it out
+my_table %>% bold_labels()
+```
+
+***
+
+As can be seen from the table, the data consists of 40 subjects divided evenly into two separate treatment groups.
+The response variable is the subjects score of Brief Psychiatric Rating Scale (BPRS) at baseline and exactly 1 week intervals thereafter for a total
+of 8 weeks (9 follow ups in total). The research question is: did the BPRS scores or their change (=slope) differ for the treatment 1 and 2 groups over
+the study period.
+
+As can be seen from the above table, there are no missing data. This would not have been an issue either way since LMM is able to deal with missing observations
+on a case-by-case basis. The data is relatively normally distributed, although there seems to be some extreme observations based on the range of variables. Let's
+explore the data more with the aid of some graphs.
+
+***
+
+### Graphical overview
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+
+#Read the data in long format for easier graphing
+bprs_long <- read.table("./data/bprs_long_data.txt", header = TRUE)
+
+#... The first two variables should be factor variables.
+bprs_long[1:2] <- lapply(bprs_long[1:2], factor)
+str(bprs_long)
+
+#Let's greate a new grouped table with mean and se of weight
+#for both groups at each timepoint
+bprs_long_grouped <- bprs_long %>%
+        group_by(treatment, week) %>%
+        summarise(
+          mean_bprs = mean(bprs),
+          mean_bprs_CI = 1.96 * sd(bprs) / sqrt(length(bprs)))
+
+
+#At the data on an individual level (and also print the means)
+my_line_plot <- ggplot(bprs_long, mapping = aes(x = week, y = bprs, colour = treatment,group = subject)) +
+                        geom_line(bprs_long_grouped, mapping = aes(x = week, y = mean_bprs, colour = treatment,group = treatment), alpha = 0.6, size = 2)+
+                        geom_errorbar(bprs_long_grouped, mapping = aes(x = week, y = mean_bprs, colour = treatment,group = treatment,ymin=mean_bprs-mean_bprs_CI, ymax=mean_bprs+mean_bprs_CI))+
+                        geom_line(alpha = 0.2, size = 1) 
+        
+ggplotly(my_line_plot)
+
+#Box plot. Don't really need this, but printing it just because it was instructed...
+my_box_plot <- ggplot(bprs_long, mapping = aes(x = week, y = bprs, colour = treatment)) +
+                        geom_boxplot(size = 1, width=0.5, alpha = 0.3,position=position_dodge2(width = 0.1,padding = 0.2)) +
+                        stat_summary(fun=mean, geom="point", shape=23, size=2, mapping = aes(group = treatment),position=position_dodge2(width = 0.7,padding = 0.1))
+        
+layout(ggplotly(my_box_plot),boxmode = "group")
+
+
+#Print out the graph with standardized (by timepoint) bprs.
+#These are very little use to us after the first two graphs.
+bprs_long <- bprs_long %>%
+            group_by(week) %>%
+            mutate(scaled_bprs = scale(bprs)) %>%
+            ungroup()
+
+ggplotly(ggplot(bprs_long, aes(x = week, y = scaled_bprs, group = subject, color = treatment)) +
+        geom_line() +
+        ylab("Scaled bprs"))
+```
+
+### Interpretation
+
+***
+
+As before, there's clear tracking visible in the data. The boxplots also seemingly confirm our observation of relatively normally distributed variables. It should be noted, however, that LMM 
+assumes normality of model residuals -- not necessarily normality of the dependent variable or, indeed, continuous independent variables. 
+
+An important fact to realize is that we have no good way of testing any of the model assumptions *a priori*. Rather, we'll fit the model and use the diagnostic plots later to assess whether 
+the assumptions are satisfied.
+
+There are some slight ourlier in both groups based on the box-and-whisker -plots (especially subject = 31). Also, subject #28 has a peculiar rise in his/her BPRS score towards the end of the study.
+However, there are no extreme outliers on individual axes (>3*IQR) so we'll leave these outliers be for now. Later we'll do influence diagnostics and deal with any overtly influential observations if necessary.
+
+Judging by the graphs, there's likely no significant differences between the groups. Overall there's an apparent decending trend for BPRS in both groups. 
+
+Ok, with this, we can dive right into LMM:
+
+***
+
+## Linear Mixed Modeling of BPRS data
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Build the LMM model. For Kenward-Roger approximation we want REML
+my_lmm <- lmer(bprs ~ week + treatment + week * treatment + (week | subject), data = bprs_long, REML = TRUE)
+
+#Let's print out some diagnostic plots
+#Plots of model residuals vs independent variables
+plot(resid(my_lmm),bprs_long$treatment)
+plot(resid(my_lmm),bprs_long$week)
+
+#Pearson residuals vs fitted
+plot(my_lmm)
+
+#Q-Q-plot of residuals
+qqnorm(resid(my_lmm))
+```
+***
+
+So, our model residuals for the treatment levels seem rather random. However, it should be noted that this graph is mostly superfluous in this instance:
+treatment has only 2 levels and a "straight line" can alway be drawn through two points.
+
+The second residual vs week graph shows evidence of a non-linear relationship between week and bprs score. There's no gross violation of this assumption, however,
+so we'll continue with our analysis without any transformations.
+
+The Pearson residual -graph is *fairly* homoscedastic, although there's slight fanning to the right. Still, we'll make do with this mild heteroscedasticity.
+
+The Q-Q-plot shows very good normal distribution of the model residuals.
+
+Next, let's continue with the influence diagnostics:
+
+***
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+#Print influence diagnostics
+library(influence.ME)
+my_infl_diag <- influence(my_lmm,group ="subject")
+
+#Dfbetas cut-off for influencial observation is +-2/sqrt(n)
+dfbetas_cutoff <- 2 / sqrt(nrow(bprs_wide))
+#We'll use the "4/n" -rule as a visual cutoff for Cook's distance:
+cooks_d_cutoff <- 4 / nrow(bprs_wide)
+
+#Produce the influence plots
+plot(my_infl_diag, which = "cook", cutoff = cooks_d_cutoff)
+plot(my_infl_diag, which = "dfbetas", cutoff = dfbetas_cutoff)
+
+```
+
+Based on the influence diagnostics, I'd take a closer look at observations 1, 5, and 31 as potential outliers. 31 has elevated Cook's distance, while 1 and 5 have an increased influence on our intercept
+estimate as well as week and week:treatment estimates.
+
+In a real data analysis I would rather drop cases one by one while also observing the model AIC to confirm that our model benefits from dropping these observations. For the purposes of this exercise,
+however, let's just drop all of these observations at once:
+
+(Also, given the small sample size, I wouldn't propably drop any observations beyond 31. But let's play along, here..)
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Print out the results of the F-test
+bprs_minus_outliers <- filter(bprs_long, !(subject %in% c(1,5,31)))
+
+my_lmm_v2 <- lmer(bprs ~ week + treatment + week * treatment + (week | subject), data = bprs_minus_outliers, REML = TRUE)
+
+#Let's take a look, if the diagnostics improved
+plot(resid(my_lmm_v2),bprs_minus_outliers$treatment)
+plot(resid(my_lmm_v2),bprs_minus_outliers$week)
+plot(my_lmm_v2)
+qqnorm(resid(my_lmm_v2))
+
+my_infl_diag <- influence(my_lmm_v2,group ="subject")
+
+#Dfbetas cut-off for influencial observation is +-2/sqrt(n)
+dfbetas_cutoff <- 2 / sqrt(nrow(bprs_wide)-3)
+#We'll use the "4/n" -rule as a visual cutoff for Cook's distance:
+cooks_d_cutoff <- 4 / (nrow(bprs_wide)-3)
+
+#Produce the influence plots
+plot(my_infl_diag, which = "cook", cutoff = cooks_d_cutoff)
+plot(my_infl_diag, which = "dfbetas", cutoff = dfbetas_cutoff)
+
+```
+
+
+***
+
+### Interpretation
+
+The model diagnostic plots showed no significant change. The influence diagnostics improved a little, perhaps, but no major improvement (excluding observations changed the model and therefore the
+potential outliers!).
+
+We'll make do with this model, however, for the purposes of getting on with things:
+
+***
+
+## LMM Results
+
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+
+anova(my_lmm_v2, type = 2, ddf = "Kenward-Roger")
+
+```
+
+## Interpretation of LMM results
+
+***
+
+Our visual observations on the data proved correct: there seems to be no statistically significant differences in etiher average bprs (p= 0.41) or the slopes of bprs over time (p = 0.15) 
+between the two treatment groups. As we hypothesized, in the whole study population there was a statistically significant change in the average bprs over the course of the study period (p < 0.001).
+
+***
+
+### A final plots to visualize the results
+```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
+#Let's visualize the mean slope of bprs improvement for either group as estimated by LMM
+time_points <- pull(unique(bprs_minus_outliers[3]), week)
+emmip(my_lmm_v2, treatment ~ week, at = list(week = time_points))
+
+#A final plot of the estimated overall linear reduction in bprs for both groups
+emmip(my_lmm_v2, ~ week, at = list(week = time_points))
+
+```
+
+These graphs should be self explanatory
+
+***
+
+Thank you, for your attention!
