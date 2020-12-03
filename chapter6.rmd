@@ -57,6 +57,8 @@ my_table <- tbl_summary(rats_wide[2:13],
 my_table %>% bold_labels()
 ```
 
+***
+
 As you can see above, the data consists of 16 rats total. Group 1 has 8 rats and groups 2 and 3 have 4 rats. Conveniently there are no missing values
 so we won't have to replace them or remove rats from the analysis. However, it should be noted that not all time intervals are equivalent.
 
@@ -213,7 +215,7 @@ TukeyHSD(my_anova)
 So, yes, there's a quite significant difference in mean AUC of weight between the groups. Specifically between groups 1 and 2 (p<0.001) and 1 and 3 (p<0.001)
 but not 2 and 3 (p=0.29).
 
-We can see how much the starting weight had influence in this outcome by simply substracting baseline weight auc (over whole study period) from
+We can study how much the starting weight had influence in this outcome by simply substracting baseline weight auc (over whole study period) from
 the "weight_auc". This is cheating a little bit, perhaps, but the outcome is the same as running a regression model and including the basline weight
 as a covariate as was done in the Data camp exercise.
 
@@ -243,18 +245,19 @@ TukeyHSD(my_anova)
 
 Somewhat surprisingly there seems to be a statistically significant difference in the mean weights for groups 1 and 2 after adjusting for the baseline weight.
 It seems that the added mean weight, over the whole study period, is 1103 gram*days higher for the group 2 than group 1 (95% CI: 42.34 - 2164, p = 0.04).
-*Ex post facto*, evidence of this result could already be seen in the initial standardized graph.
+*Ex post facto* I noticed that evidence of this result could already be seen in the initial standardized graph.
 
-This result would suggest that we should perhaps take a closer look at the growth rates in the data. For this purpose a LMM is the best choice.
+This result would suggest that we should perhaps take a closer look at the growth rates in the data. For this purpose we could do a comparison of regression coefficients but, honestly,
+LMM is the best choice here, so let's skip right to it:
 
 ***
 
-### An extension of the Datacamp exercises
+### Extracurricualr activities: LMM of the RATS data
 
 ***
 
 Let's run a quick LMM on RATS like we originally should have done if we really were analyzing this data. Also, unlike in the Datacamp exercises let's also do 
-F-tests for the fixed-effects via Kenward-Roger approximation so we get some usable results, as well. (As before, we'll skip the evaluation of model assumptions.)
+F-tests for the fixed-effects via Kenward-Roger approximation so we get some usable results, as well. For brevity, we'll skip the evaluation of model assumptions.
 
 ***
 
@@ -305,7 +308,7 @@ Now, compared to the AUC analysis, the interpretation of this result is quite di
 whereas in the AUC analysis we could only say that the mean weight change beyond baseline was more positive over all timepoints during the study. In light of the AUC
 it would've been even possible that group 2 finished the study with a lower weight than group 1 if the mean weigh was greater over other timepoints. 
 
-All in all, the LMM was quite a bit more eloquent and protected us from issues with multiplicity.
+All in all, the LMM was quite a bit more eloquent and also protected us from issues with multiplicity.
 
 ***
 
@@ -314,13 +317,13 @@ All in all, the LMM was quite a bit more eloquent and protected us from issues w
 
 ***
 
-The chapter 9 of MABS covers LMM analysis for data with normal response variables. As I have some passing experience with hierachical LMM already through my
-adventures in biostatistics, I'll perform the LMM as I'd do from previous experience. You can evaluate the results as compared to what's contained in
-the chapter 9 of MABS.
+The chapter 9 of MABS covers LMM analysis for data with normal response variables. As I have some passing experience with hierachical LMM through my previous
+adventures in biostatistics, I'll wing it from previous experience. You're welcome to evaluate the results as compared to what's contained in the chapter 9 of MABS.
 
 The relevant assumptions of LMM are as follows:
+
 Statistical assumption  | Method used to verify/analyze
----           | -------------
+------------           | -------------
 The chosen model is appropriate for the studied effect (i.e. linear)  | Visual inspection of model residuals plotted against within subject factors
 The residuals of the model are normally distributed  | Visual inspection of the Q-Q plots of the residuals
 The variance of residuals is homogeneous vs fitted value   | Visual inspenction of pearson residual vs fitted value
@@ -427,7 +430,7 @@ assumes normality of model residuals -- not necessarily normality of the depende
 An important fact to realize is that we have no good way of testing any of the model assumptions *a priori*. Rather, we'll fit the model and use the diagnostic plots later to assess whether 
 the assumptions are satisfied.
 
-There are some slight ourlier in both groups based on the box-and-whisker -plots (especially subject = 31). Also, subject #28 has a peculiar rise in his/her BPRS score towards the end of the study.
+There are some slight ourliers in both groups based on the box-and-whisker -plots (especially subject = 31). Also, subject #28 has a peculiar rise in his/her BPRS score towards the end of the study.
 However, there are no extreme outliers on individual axes (>3*IQR) so we'll leave these outliers be for now. Later we'll do influence diagnostics and deal with any overtly influential observations if necessary.
 
 Judging by the graphs, there's likely no significant differences between the groups. Overall there's an apparent decending trend for BPRS in both groups. 
@@ -486,6 +489,8 @@ plot(my_infl_diag, which = "dfbetas", cutoff = dfbetas_cutoff)
 
 ```
 
+***
+
 Based on the influence diagnostics, I'd take a closer look at observations 1, 5, and 31 as potential outliers. 31 has elevated Cook's distance, while 1 and 5 have an increased influence on our intercept
 estimate as well as week and week:treatment estimates.
 
@@ -493,6 +498,8 @@ In a real data analysis I would rather drop cases one by one while also observin
 however, let's just drop all of these observations at once:
 
 (Also, given the small sample size, I wouldn't propably drop any observations beyond 31. But let's play along, here..)
+
+***
 
 ```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 #Print out the results of the F-test
