@@ -535,6 +535,10 @@ We'll make do with this model, however, for the purposes of getting on with thin
 
 ```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 
+#Let's print model summary as well.
+summary(my_lmm_v2)
+
+#We're really interested in the Kenward-Roger based F-test for our fixed effects:
 anova(my_lmm_v2, type = 2, ddf = "Kenward-Roger")
 
 ```
@@ -548,7 +552,7 @@ between the two treatment groups. As we hypothesized, in the whole study populat
 
 ***
 
-### A final plots to visualize the results
+### Final plots to visualize the results
 ```{r, fig.width=8, fig.height=8,warning=FALSE, message=FALSE}
 #Let's visualize the mean slope of bprs improvement for either group as estimated by LMM
 time_points <- pull(unique(bprs_minus_outliers[3]), week)
